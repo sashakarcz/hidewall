@@ -8,8 +8,13 @@ Hidewall is what powers `hidewall.io`, a web service to bypass most paywalls. Yo
 
 Hide wall has a *very basic* web UI where you may enter your requested URL that is blocked by a paywall. You can also pass the URL you want to `https://hidewall.io/yeet?y=`.
 
+### iOS
 A Shortcut is offered for iOS [here](https://www.icloud.com/shortcuts/3d97b3293a944f8fa83ba987a8bd5a92).
 
+### Chrome Extension
+Open the Chrome browser and go to chrome://extensions/. Enable "Developer mode" in the top right corner. Click the "Load unpacked" button and select the extension directory (the one containing manifest.json, named chrome).
+
+Now, when you click the extension icon, the popup will appear with a "Yeet It!" button. Clicking the button will modify the current tab's URL by adding https://hidewall.io/yeet?y= to it and then open a new tab with the modified URL.
 
 ## How to Build
 
