@@ -15,19 +15,18 @@ search_template = """
 </head>
 <body>
     <h1>Paywall Bypass</h1>
-    <form method="GET" action="/search">
-        <input type="text" name="query" placeholder="http://news.site/blocked">
+    <form method="GET" action="/yeet">
+        <input type="text" name="y" placeholder="http://news.site/blocked">
         <input type="submit" value="Remove Paywall">
     </form>
     {% if results %}
-    <h2>Search Results</h2>
+    <h2>Paywall Be Gone</h2>
     <ul>
         {% for result in results %}
         <li><a href="{{ result['link'] }}">{{ result['title'] }}</a></li>
         {% endfor %}
     </ul>
     {% endif %}
-<script src="/index.js"></script>
 </body>
 </html>
 """
@@ -36,9 +35,9 @@ search_template = """
 def index():
     return render_template_string(search_template)
 
-@app.route("/search")
+@app.route("/yeet")
 def search():
-    query = request.args.get("query", "")
+    query = request.args.get("y", "")
     url_query = request.args.get("url_query", "")
     
     if query:

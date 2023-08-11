@@ -8,7 +8,7 @@ Hidewall is what powers `hidewall.io`, a web service to bypass most paywalls. Yo
 
 Hide wall has a *very basic* web UI where you may enter your requested URL that is blocked by a paywall. You can also pass the URL you want to `https://hidewall.io/search?query=`.
 
-A Shortcut is offered for iOS [here](https://www.icloud.com/shortcuts/96d8cae287e54f2d80249906cb1c7093).
+A Shortcut is offered for iOS [here](https://www.icloud.com/shortcuts/3d97b3293a944f8fa83ba987a8bd5a92).
 
 
 ## How to Build
