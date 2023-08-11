@@ -6,34 +6,49 @@ from flask import Flask, request, render_template_string
 
 app = Flask(__name__, static_url_path='/static')
 
-# HTML template for the search page
-search_template = """
+# HTML template for the homepage
+home_template = """
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hidewalls</title>
+<meta charset="utf-8">
+<title>Hidewalls</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="static/fonts/material-design-iconic-font/css/material-design-iconic-font.min.css">
+
+<link rel="stylesheet" href="static/css/style.css">
+<meta name="robots" content="noindex, follow">
 </head>
 <body>
-    <h1>Paywall Bypass</h1>
-    <form method="GET" action="/yeet">
-        <input type="text" name="y" placeholder="http://news.site/blocked">
-        <input type="submit" value="Remove Paywall">
-    </form>
-    {% if results %}
-    <h2>Paywall Be Gone</h2>
+  <div class="wrapper">
+    <div class="inner">
+      <form method="GET" action="/yeet">
+      <h3>Be Gone Paywalls!</h3>
+      <p>Paste the URL to the site you wish to visit in the box, and then click Remove Paywalls.</p>
+      <label class="form-group">
+        <input type="text" name="y" class="form-control" required>
+        <span>http://news.site/blocked</span>
+        <span class="border"></span>
+      </label>
+      <button>Remove Paywalls</button>
+     </form>
+    </div>
+  </div>
+      {% if results %}
     <ul>
         {% for result in results %}
         <li><a href="{{ result['link'] }}">{{ result['title'] }}</a></li>
         {% endfor %}
     </ul>
     {% endif %}
-</body>
+ </body>
 </html>
 """
 
 @app.route("/")
 def index():
-    return render_template_string(search_template)
+    return render_template_string(home_template)
 
 @app.route("/yeet")
 def search():
