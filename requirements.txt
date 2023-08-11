@@ -1,0 +1,4 @@
+bjoern
+requests
+beautifulsoup4
+Flask
