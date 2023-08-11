@@ -43,7 +43,7 @@ def search():
     
     if query:
       base_url = "http://webcache.googleusercontent.com/search?q=cache:"
-      if "nytimes.com" or "wsj.com" in query:
+      if "nytimes.com" in query:
           base_url = "https://web.archive.org/web/"
 
       # Generate the complete query URL
