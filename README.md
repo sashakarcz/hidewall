@@ -14,7 +14,7 @@ A Shortcut is offered for iOS [here](https://www.icloud.com/shortcuts/3d97b3293a
 ### Chrome Extension
 Open the Chrome browser and go to chrome://extensions/. Enable "Developer mode" in the top right corner. Click the "Load unpacked" button and select the extension directory (the one containing manifest.json, named chrome).
 
-Now, when you click the extension icon, the popup will appear with a "Yeet It!" button. Clicking the button will modify the current tab's URL by adding https://hidewall.io/yeet?y= to it and then open a new tab with the modified URL.
+Now, when you click the extension icon, the popup will appear with a "Yeet It!" button. Clicking the button will modify the current tab's URL by adding `https://hidewall.io/yeet?y=` to it and then open a new tab with the modified URL.
 
 ## How to Build
 
