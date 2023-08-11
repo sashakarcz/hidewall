@@ -1,9 +1,9 @@
 version: "3"
 services:
   paywall:
-    image: my-google-cache-app
+    image: hidewall
     ports:
       - "8069:80"
     restart: unless-stopped
     labels:
-      - "traefik.http.routers.paywall.rule=Host(`paywall.starnix.net`)"
+      - "traefik.http.routers.paywall.rule=Host(`hostname`)"
