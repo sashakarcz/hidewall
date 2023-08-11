@@ -16,8 +16,8 @@ search_template = """
 <body>
     <h1>Paywall Bypass</h1>
     <form method="GET" action="/search">
-        <input type="text" name="query" placeholder="Enter paywalled site">
-        <input type="submit" value="Search">
+        <input type="text" name="query" placeholder="http://news.site/blocked">
+        <input type="submit" value="Remove Paywall">
     </form>
     {% if results %}
     <h2>Search Results</h2>
