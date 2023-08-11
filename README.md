@@ -17,7 +17,7 @@ A Shortcut is offered for iOS [here](https://www.icloud.com/shortcuts/3d97b3293a
 ### Clone this repo:
 
 ```
-git clone https://git.starnix.net/sasha/hidewall.git
+git clone https://github.com/sashakarcz/hidewall.git
 ```
 
 ## Build the Docker image
@@ -43,7 +43,7 @@ The app will be accessable on port `8069` of the Docker host. Included in the Do
 Feel free to open a bug here, or email me at `sasha@starnix.net`
 
 ## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+I want to add Chrome and Firefox extensions, and an easy way to use on Android.
 
 ## Contributing
 Please fork me!
