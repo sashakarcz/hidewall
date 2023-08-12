@@ -1,0 +1,32 @@
+{
+  "name": "Hidewalls",
+  "short_name": "Hidewalls",
+  "description": "Begone Paywalls!",
+  "share_target": {
+    "action": "https://hidewall.io/yeet?y=",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "text": "y",
+      "url": "link"
+    }
+  },
+  "icons": [
+    {
+      "src": "images/icon192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "files": [
+    "static/css/styles.css",
+    "static/images/icon192.png",
+    "static/service-worker.js"
+  ],
+  "scope": "/"
+}
+
