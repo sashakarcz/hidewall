@@ -48,7 +48,7 @@ The app will be accessable on port `8069` of the Docker host. Included in the Do
 Feel free to open a bug here, or email me at `sasha@starnix.net`
 
 ## Roadmap
-I want to add Chrome and Firefox extensions, and an easy way to use on Android.
+I want to add Chrome and Firefox extensions that are available for easy download.
 
 ## Contributing
 Please fork me!
