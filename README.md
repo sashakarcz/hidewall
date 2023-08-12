@@ -8,6 +8,9 @@ Hidewall is what powers `hidewall.io`, a web service to bypass most paywalls. Yo
 
 Hide wall has a *very basic* web UI where you may enter your requested URL that is blocked by a paywall. You can also pass the URL you want to `https://hidewall.io/yeet?y=`.
 
+### Android
+This can be installed as a Progressive Web App (PWA). If you visit `https://hidewall.io`, you will be prompted to "Add Hidewalls to Home screen". This will download a PWA version that you can use to share blocked content to.
+
 ### iOS
 A Shortcut is offered for iOS [here](https://www.icloud.com/shortcuts/3d97b3293a944f8fa83ba987a8bd5a92).
 
