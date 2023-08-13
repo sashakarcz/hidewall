@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Hidewalls</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="static/fonts/material-design-iconic-font/css/material-design-iconic-font.min.css">
+
+<link rel="stylesheet" href="static/css/style.css">
+<meta name="robots" content="noindex, follow">
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js', { scope: '/' })
+      .then(registration => {
+        console.log('Service Worker registered with scope:', registration.scope);
+      })
+      .catch(error => {
+        console.log('Service Worker registration failed:', error);
+      });
+  }
+</script>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="inner">
+      <form method="GET" action="/yeet">
+      <h3>Be Gone Paywalls!</h3>
+      <p>Paste the URL to the site you wish to visit in the box, and then click Remove Paywalls.</p>
+      <label class="form-group">
+        <input type="text" name="y" class="form-control" required>
+        <span>http://news.site/blocked</span>
+        <span class="border"></span>
+      </label>
+      <button>Remove Paywalls</button>
+     </form>
+    </div>
+  </div>
+      {% if results %}
+    <ul>
+        {% for result in results %}
+        <li><a href="{{ result['link'] }}">{{ result['title'] }}</a></li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+ </body>
+</html>
