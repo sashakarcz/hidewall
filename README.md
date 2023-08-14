@@ -50,7 +50,7 @@ docker compose up -d
 The app will be accessable on port `8069` of the Docker host. Included in the Docker Compse file, is a Traefik label. The setup and configuration of Traefik is outside the scope of this README
 
 ## Support
-Feel free to open a bug here, or email me at [`sasha@starnix.net`](sasha@starnix.net)
+Feel free to open a bug here, or email me at [`sasha@starnix.net`](mailto:sasha@starnix.net?subject=[GitHub]%20Source%20Han%20Sans))
 
 ## Roadmap
 I want to add Chrome and Firefox extensions that are available for easy download.
