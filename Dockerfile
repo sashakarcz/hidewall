@@ -1,31 +1,17 @@
-FROM debian
-#ENV TERM=linux
-#ARG DEBIAN_FRONTEND=noninteractive
-ENV TZ="America/Chicago"
-RUN echo $TZ > /etc/timezone
-RUN apt-get update
-RUN apt-get -qq install python3 python3-pip libev-dev curl
-# Install your thing you need
-# RUN apt -qq install somelibrary
-
+FROM python
 LABEL version="1.0"
 LABEL org.opencontainers.image.authors="sasha@starnix.net"
 
-# Set the working directory inside the container
-WORKDIR /app
-
-# Copy the requirements file and install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt --break-system-packages
-
-# Copy the current directory contents into the container at /app
-COPY yeet.py /app/
-COPY service-worker.js /app/
-COPY static /app/static/
-
-# Expose the port the app runs on
 EXPOSE 80
+WORKDIR /app
+COPY . /app/
 
-# Run the application
-CMD ["python3", "yeet.py"]
+RUN ln -sf /usr/share/zoneinfo/America/Chicago /etc/localtime
+
+RUN apt-get -qq update
+RUN apt-get -qq install build-essential python3-dev libev-dev curl python-is-python3
+
+RUN python -m pip install --upgrade pip setuptools wheel
+RUN python -m pip install --user -r requirements.txt
+CMD ["python", "yeet.py"]
 
