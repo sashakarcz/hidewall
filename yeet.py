@@ -20,6 +20,11 @@ CACHE_ARCHIVEORG = 'https://web.archive.org/web/'
 APPROUTE_ROOT = '/'
 APPROUTE_JS = '/' + JAVASCRIPT
 APPROUTE_APP = '/yeet'
+    
+# Read the list of blocked sites from the file
+with open('blocked_sites.txt', 'r') as file:
+    blocked_sites = [line.strip() for line in file]
+
 
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__, static_url_path=STATICURLPATH)
@@ -43,14 +48,15 @@ def search():
     """
     Lookup a source from various caches
     """
+
     query = request.args.get("y", "")
     # url_query = request.args.get("url_query", "")
 
     if query:
         try:
             base_url = CACHE_GOOGLE
-            if "nytimes.com" in query:
-                base_url = CACHE_ARCHIVEORG
+            if any(site in query for site in blocked_sites): 
+              base_url = CACHE_ARCHIVEORG
 
             # Generate the complete query URL
             query_url = f"{base_url}{quote_plus(query)}"
