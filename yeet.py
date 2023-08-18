@@ -6,6 +6,7 @@ Wayback Machine to access content that is blocked behind a soft paywall.
 import logging
 from urllib.parse import quote_plus
 import requests
+import re
 import bjoern
 from bs4 import BeautifulSoup
 from flask import Flask, request, render_template, send_from_directory
@@ -17,6 +18,7 @@ JAVASCRIPT = 'service-worker.js'
 STATICURLPATH = '/static'
 CACHE_GOOGLE = 'http://webcache.googleusercontent.com/search?q=cache:'
 CACHE_ARCHIVEORG = 'https://web.archive.org/web/'
+CACHE_ARCHIVE = 'https://archive.is/latest/'
 APPROUTE_ROOT = '/'
 APPROUTE_JS = '/' + JAVASCRIPT
 APPROUTE_APP = '/yeet'
@@ -57,16 +59,28 @@ def search():
             base_url = CACHE_GOOGLE
             if any(site in query for site in blocked_sites): 
               base_url = CACHE_ARCHIVEORG
+            if "wsj.com" in query:
+              base_url = CACHE_ARCHIVE
+              query = re.sub(r"\?.*", "", query)
 
             # Generate the complete query URL
             query_url = f"{base_url}{quote_plus(query)}"
-            response = requests.get(query_url)
+
+            # Retrieve User-Agent header from the request
+            user_agent = request.headers.get("User-Agent")
+
+            # Define headers dictionary with User-Agent
+            headers = {
+                "User-Agent": user_agent
+            }
+            
+            response = requests.get(query_url, headers=headers)
 
             # Parse the entire page content using BeautifulSoup
             soup = BeautifulSoup(response.text, "html.parser")
 
             # Remove header elements
-            selectors_to_remove = '[id*="google-cache-hdr"], [id*="wm-ipp"]'
+            selectors_to_remove = '[id*="google-cache-hdr"], [id*="wm-ipp"], [id*="HEADER"]'
             elements_to_remove = soup.select(selectors_to_remove)
             for element in elements_to_remove:
                 element.extract()
