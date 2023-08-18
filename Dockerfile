@@ -3,6 +3,12 @@ LABEL version="1.0"
 LABEL org.opencontainers.image.authors="sasha@starnix.net"
 
 EXPOSE 80
+
+# Allow statements and log messages to immediately appear in the logs
+ENV PYTHONUNBUFFERED True
+
+# Copy local code to the container image.
+ENV APP_HOME /app
 WORKDIR /app
 COPY . /app/
 
