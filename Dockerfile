@@ -6,6 +6,8 @@ EXPOSE 80
 WORKDIR /app
 COPY . /app/
 
+ENV PYTHONPATH "${PYTHONPATH}:/usr/src/app"
+
 RUN ln -sf /usr/share/zoneinfo/America/Chicago /etc/localtime
 
 RUN apt-get -qq update
