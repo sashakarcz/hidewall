@@ -67,13 +67,16 @@ def search():
             query_url = f"{base_url}{quote_plus(query)}"
 
             # Retrieve User-Agent header from the request
-            user_agent = request.headers.get("User-Agent")
+            #user_agent = request.headers.get("User-Agent")
 
             # Define headers dictionary with User-Agent
+            #headers = {
+            #    "User-Agent": user_agent
+            #}
             headers = {
-                "User-Agent": user_agent
+              "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36" ,
+              'referer':'https://www.google.com/'
             }
-            
             response = requests.get(query_url, headers=headers)
 
             # Parse the entire page content using BeautifulSoup
