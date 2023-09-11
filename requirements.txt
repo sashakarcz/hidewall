@@ -1,4 +1,4 @@
 bjoern
-requests
+requests==2.31.0
 beautifulsoup4
 Flask
