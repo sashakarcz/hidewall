@@ -4,6 +4,7 @@ Wayback Machine to access content that is blocked behind a soft paywall.
 """
 
 import logging
+import os
 from urllib.parse import quote_plus
 import requests
 import re
@@ -11,8 +12,9 @@ import bjoern
 from bs4 import BeautifulSoup
 from flask import Flask, request, render_template, send_from_directory
 
+PORT = int(os.environ.get("PORT", 80))
+
 HOST = '0.0.0.0'
-PORT = 80
 TEMPLATE = 'index.html'
 JAVASCRIPT = 'service-worker.js'
 STATICURLPATH = '/static'
