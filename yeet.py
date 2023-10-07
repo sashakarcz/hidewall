@@ -18,16 +18,9 @@ HOST = '0.0.0.0'
 TEMPLATE = 'index.html'
 JAVASCRIPT = 'service-worker.js'
 STATICURLPATH = '/static'
-CACHE_GOOGLE = 'http://webcache.googleusercontent.com/search?q=cache:'
-CACHE_ARCHIVEORG = 'https://web.archive.org/web/'
-CACHE_ARCHIVE = 'https://archive.is/latest/'
 APPROUTE_ROOT = '/'
 APPROUTE_JS = '/' + JAVASCRIPT
 APPROUTE_APP = '/yeet'
-    
-# Read the list of blocked sites from the file
-with open('blocked_sites.txt', 'r') as file:
-    blocked_sites = [line.strip() for line in file]
 
 
 logging.basicConfig(level=logging.INFO)
@@ -58,37 +51,22 @@ def search():
 
     if query:
         try:
-            base_url = CACHE_GOOGLE
-            if any(site in query for site in blocked_sites): 
-              base_url = CACHE_ARCHIVEORG
-            if "wsj.com" in query:
-              base_url = CACHE_ARCHIVE
-              query = re.sub(r"\?.*", "", query)
-
             # Generate the complete query URL
-            query_url = f"{base_url}{quote_plus(query)}"
+            query_url = f"{query}"
 
             # Retrieve User-Agent header from the request
-            #user_agent = request.headers.get("User-Agent")
+            user_agent = request.headers.get("User-Agent")
 
             # Define headers dictionary with User-Agent
             #headers = {
             #    "User-Agent": user_agent
             #}
-            headers = {
-              "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36" ,
-              'referer':'https://www.google.com/'
-            }
+            headers = {'User-Agent': user_agent}
+
             response = requests.get(query_url, headers=headers)
 
             # Parse the entire page content using BeautifulSoup
             soup = BeautifulSoup(response.text, "html.parser")
-
-            # Remove header elements
-            selectors_to_remove = '[id*="google-cache-hdr"], [id*="wm-ipp"], [id*="HEADER"]'
-            elements_to_remove = soup.select(selectors_to_remove)
-            for element in elements_to_remove:
-                element.extract()
 
             # Render the parsed content as a string
             rendered_content = soup.prettify()
@@ -105,4 +83,4 @@ def search():
 
 if __name__ == "__main__":
     print(f"Starting server on {HOST}:{PORT}")
-    bjoern.run(app, HOST, PORT)
+    bjoern.run(app, HOST, int(PORT))
