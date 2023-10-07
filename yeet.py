@@ -43,7 +43,7 @@ def service_worker():
 @app.route(APPROUTE_APP)
 def search():
     """
-    Lookup a source from various caches
+    Download URL via requests and re-serve it using BeautifulSoup
     """
 
     query = request.args.get("y", "")
