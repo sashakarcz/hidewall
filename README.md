@@ -55,6 +55,8 @@ Feel free to open a bug here, or email me at [`sasha@starnix.net`](mailto:sasha@
 ## Roadmap
 I want to add Chrome and Firefox extensions that are available for easy download.
 
+`wsj.com` is proving to be interesting, and more work needs to be done on how to access that content.
+
 ## Contributing
 Please fork me!
 
