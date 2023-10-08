@@ -15,4 +15,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag hidewall && docker tag hidewall us-central1-docker.pkg.dev/possible-flag-241321/hidewall/hidewall1_0 && docker push us-central1-docker.pkg.dev/possible-flag-241321/hidewall/hidewall1_0
+      run: docker build . --file Dockerfile --tag hidewall:latest
