@@ -82,9 +82,7 @@ def is_valid_url(url):
     Validate if a given URL is valid.
     """
     # Use a regex pattern for basic URL validation
-    pattern = re.compile(
-        r'^(https?://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]'
-    )
+    pattern = re.compile(r'^(https?://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|])')
     return bool(pattern.match(url))
 
 if __name__ == "__main__":
