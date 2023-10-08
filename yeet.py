@@ -5,9 +5,8 @@ to access content that is blocked behind a soft paywall.
 
 import logging
 import os
-from urllib.parse import quote_plus
-import requests
 import re
+import requests
 import bjoern
 from bs4 import BeautifulSoup
 from flask import Flask, request, render_template, send_from_directory
@@ -59,7 +58,7 @@ def search():
             # Define headers dictionary with User-Agent
             headers = {'User-Agent': user_agent}
 
-            response = requests.get(query, headers=headers)
+            response = requests.get(query, headers=headers, timeout=10)
 
             # Parse the entire page content using BeautifulSoup
             soup = BeautifulSoup(response.text, "html.parser")
@@ -72,7 +71,7 @@ def search():
 
         except Exception as an_err:
             # Log the error for debugging purposes
-            logging.error(f"An error occurred: {str(an_err)}")
+            logging.error("An error occurred: %s", str(an_err))
             return "An error occurred", 500
 
     # Handle the case where query is empty
@@ -91,4 +90,3 @@ def is_valid_url(url):
 if __name__ == "__main__":
     print(f"Starting server on {HOST}:{PORT}")
     bjoern.run(app, HOST, int(PORT))
-
