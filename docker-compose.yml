@@ -1,7 +1,7 @@
 version: "3"
 services:
   paywall:
-    image: hidewall
+    image: astrognome/hidewall:latest
     ports:
       - "8069:80"
     restart: unless-stopped
