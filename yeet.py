@@ -48,6 +48,9 @@ def search():
 
     if query:
         try:
+            # Validate the input URL
+            if not is_valid_url(query):
+                return "Invalid URL provided", 400
             # Retrieve User-Agent header from the request
             user_agent = request.headers.get("User-Agent")
 
@@ -67,11 +70,21 @@ def search():
 
         except Exception as an_err:
             # Log the error for debugging purposes
-            error_message = f"Unexpected {an_err=}, {type(an_err)=}"
-            return error_message, 500
+            #error_message = f"Unexpected {an_err=}, {type(an_err)=}"
+            #return error_message, 500
+            logging.error("An error occurred: %s", str(an_err))
+            return "An error occurred", 500
 
     # Handle the case where query is empty
     return "No query provided", 400
+
+def is_valid_url(url):
+    """
+    Validate if a given URL is valid.
+    """
+    # Use a regex pattern for basic URL validation
+    pattern = re.compile(r'^(https?://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|])')
+    return bool(pattern.match(url))
 
 if __name__ == "__main__":
     print(f"Starting server on {HOST}:{PORT}")
