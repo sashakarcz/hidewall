@@ -109,7 +109,7 @@ def use_cache(url):
     Uses a web cache to download site, then remove any headers that have been added.
     """
     # Generate the complete query URL
-    base_url = CACHE_GOOGLE
+    base_url = CACHE_ARCHIVEORG
     query_url = f"{base_url}{quote_plus(url)}"
 
     # Retrieve User-Agent header from the request
