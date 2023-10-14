@@ -73,6 +73,7 @@ def search():
 
     # Handle the case where query is empty
     return "No query provided", 400
+
 def is_valid_url(url):
     """
     Validate if a given URL is valid.
