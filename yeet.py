@@ -119,6 +119,8 @@ def use_cache(url):
     if SOCKS_PROXY:
       socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, SOCKS_PROXY, PROXY_PORT, True, USERNAME, PASSWORD)
       socket.socket = socks.socksocket  # Override the default socket with the SOCKS-enabled socket
+    else:
+      pass # Use default socket
 
     # Generate the complete query URL
     base_url = CACHE_GOOGLE
