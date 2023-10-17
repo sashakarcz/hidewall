@@ -5,5 +5,10 @@ services:
     ports:
       - "8069:80"
     restart: unless-stopped
+    environment:
+      - "PROXY="
+      - "PROXY_PORT="
+      - "USERNAME="
+      - "PASSWORD="
     labels:
       - "traefik.http.routers.paywall.rule=Host(`hostname`)"
