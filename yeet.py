@@ -9,6 +9,8 @@ import re
 from urllib.parse import quote_plus  # Added import
 import requests
 import bjoern
+import socks
+import socket
 from bs4 import BeautifulSoup
 from flask import Flask, request, render_template, send_from_directory
 
@@ -108,8 +110,18 @@ def use_cache(url):
     """
     Uses a web cache to download site, then remove any headers that have been added.
     """
+    SOCKS_PROXY = str(os.environ.get("PROXY", ))
+    PROXY_PORT = int(os.environ.get("PROXY_PORT", ))
+    USERNAME = str(os.environ.get("USERNAME", ))
+    PASSWORD = str(os.environ.get("PASSWORD", ))
+
+    # Create a socket object with the SOCKS5 proxy
+    if SOCKS_PROXY:
+      socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, SOCKS_PROXY, PROXY_PORT, True, USERNAME, PASSWORD)
+      socket.socket = socks.socksocket  # Override the default socket with the SOCKS-enabled socket
+
     # Generate the complete query URL
-    base_url = CACHE_ARCHIVEORG
+    base_url = CACHE_GOOGLE
     query_url = f"{base_url}{quote_plus(url)}"
 
     # Retrieve User-Agent header from the request
