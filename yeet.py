@@ -135,6 +135,9 @@ def use_cache(url):
     }
 
     response = requests.get(query_url, headers=headers, timeout=60)
+    
+    # Reset the socket settings to the default
+    socks.setdefaultproxy()
 
     # Parse the entire page content using BeautifulSoup
     soup = BeautifulSoup(response.text, "html.parser")
