@@ -1,5 +1,7 @@
 # Hidewall
 
+[![Publish Docker image](https://github.com/sashakarcz/hidewall/actions/workflows/docker-image.yml/badge.svg)](https://github.com/sashakarcz/hidewall/actions/workflows/docker-image.yml)
+
 ## About
 
 Hidewall is what powers `hidewall.io`, a web service to bypass most paywalls. Hidewall is a Python Flask app that uses Requests, BeautifulSoup, and web caches to access content that is blocked behind a soft paywall.
