@@ -1,3 +1,4 @@
 # Some sites don't play well with python requests. Those sites go here, and we try to pull content from a web cache
-theatlantic.com
+bloomberg.com
 telegraph.co.uk
+theatlantic.com
