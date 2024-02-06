@@ -123,7 +123,7 @@ def use_cache(url):
       pass # Use default socket
 
     # Generate the complete query URL
-    base_url = CACHE_GOOGLE
+    base_url = CACHE_ARCHIVEORG
     query_url = f"{base_url}{quote_plus(url)}"
 
     # Retrieve User-Agent header from the request
