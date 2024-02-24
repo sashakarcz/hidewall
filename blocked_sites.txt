@@ -2,3 +2,4 @@
 bloomberg.com
 telegraph.co.uk
 theatlantic.com
+wsj.com

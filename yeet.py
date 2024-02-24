@@ -11,6 +11,9 @@ import requests
 import bjoern
 import socks
 import socket
+from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 from bs4 import BeautifulSoup
 from flask import Flask, request, render_template, send_from_directory
 
@@ -64,7 +67,7 @@ def search():
 
             rendered_content = request_url(query)  # Capture the result
             if any(site in query for site in blocked_sites):
-                rendered_content = use_cache(query)  # Capture the result
+                rendered_content = request_url_js(query)  # Capture the result
 
             return rendered_content  # Return the result
 
@@ -89,18 +92,27 @@ def request_url(url):
     Download URL via requests and servce it using BeautifulSoup
     """
 
-    # Retrieve User-Agent header from the request
-    user_agent = request.headers.get("User-Agent")
-
-    # Define headers dictionary with User-Agent
-    headers = {'User-Agent': user_agent}
+    # Define headers to mimic GoogleBot
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Cache-Control': 'max-age=0',
+    }
 
     response = requests.get(url, headers=headers, timeout=10)
 
     # Parse the entire page content using BeautifulSoup
     soup = BeautifulSoup(response.text, "html.parser")
 
-    # Render the parsed content as a string
+    # Remove all <script> tags and their contents
+    for script in soup.find_all('script'):
+        script.extract()
+
+   # Render the parsed content as a string
     rendered_content = soup.prettify()
 
     # Return the parsed content as a response
