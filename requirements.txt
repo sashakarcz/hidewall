@@ -1,7 +1,5 @@
 bjoern
 requests==2.31.0
-selenium
-webdriver_manager
 beautifulsoup4
 Flask
 PySocks

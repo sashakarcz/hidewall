@@ -11,9 +11,6 @@ import requests
 import bjoern
 import socks
 import socket
-from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.options import Options as ChromeOptions
 from bs4 import BeautifulSoup
 from flask import Flask, request, render_template, send_from_directory
 
@@ -67,7 +64,7 @@ def search():
 
             rendered_content = request_url(query)  # Capture the result
             if any(site in query for site in blocked_sites):
-                rendered_content = request_url_js(query)  # Capture the result
+                rendered_content = use_cache(query)  # Capture the result
 
             return rendered_content  # Return the result
 
