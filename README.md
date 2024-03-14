@@ -59,7 +59,7 @@ I want to add Chrome and Firefox extensions that are available for easy download
 
 `wsj.com` is proving to be interesting, and more work needs to be done on how to access that content.
 
-I am tryhing to use `archive.today` as the web cache of choice. That may change to either WebArchive, or, Google Web Cache.
+I am trying to use `archive.today` as the web cache of choice. Currently, hidewall uses WebArchive.
 
 ## Contributing
 Please fork me!
