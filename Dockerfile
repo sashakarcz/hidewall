@@ -1,5 +1,5 @@
 FROM python
-LABEL version="2.1"
+LABEL version="2.2"
 LABEL org.opencontainers.image.authors="sasha@starnix.net"
 
 ENV PORT 80
