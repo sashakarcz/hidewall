@@ -1,11 +1,12 @@
 version: "3"
 services:
   paywall:
-    image: astrognome/hidewall:latest
+    image: astrognome/hidewall
     ports:
       - "8069:80"
     restart: unless-stopped
     environment:
+      - "USE_PROXY=true"
       - "PROXY="
       - "PROXY_PORT="
       - "USERNAME="
