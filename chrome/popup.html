@@ -1,15 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Be Gone Paywalls</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Be Gone Paywalls!</title>
   <style>
     body {
-      width: 200px;
+      font-family: Arial, sans-serif;
+      width: 250px;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 1.2em;
+      color: #333;
+      text-align: center;
+    }
+
+    #yeetButton {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-top: 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #yeetButton:hover {
+      background-color: #45a049;
+    }
+
+    #yeetButton:active {
+      background-color: #3e8e41;
+    }
+
+    #yeetButton:focus {
+      outline: none;
+    }
+
+    #yeetButton:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
     }
   </style>
-  <script src="popup.js"></script>
 </head>
 <body>
+  <h1>Be Gone Paywalls!</h1>
   <button id="yeetButton">Yeet It!</button>
 </body>
 </html>
