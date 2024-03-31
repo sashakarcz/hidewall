@@ -37,7 +37,7 @@ logging.basicConfig(level=logging.INFO)
 app = Flask(__name__, static_url_path=STATICURLPATH)
 
 @app.route(PRIVACY_POLICY)
-def index():
+def privacy():
     """
     Display the privacy policy from template
     """
