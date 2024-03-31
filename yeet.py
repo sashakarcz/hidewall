@@ -25,6 +25,7 @@ CACHE_ARCHIVE = 'https://archive.is/latest/'
 STATICURLPATH = '/static'
 APPROUTE_ROOT = '/'
 APPROUTE_JS = '/' + JAVASCRIPT
+APPROUTE_APP = '/yeet'
 
 # Read the list of blocked sites from the file
 with open('blocked_sites.txt', 'r') as file:
