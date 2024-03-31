@@ -25,9 +25,6 @@ CACHE_ARCHIVE = 'https://archive.is/latest/'
 STATICURLPATH = '/static'
 APPROUTE_ROOT = '/'
 APPROUTE_JS = '/' + JAVASCRIPT
-APPROUTE_APP = '/yeet'
-PRIVACY_POLICY = '/privacy'
-PRIVACY_TEMPLATE = 'privacy.html'
 
 # Read the list of blocked sites from the file
 with open('blocked_sites.txt', 'r') as file:
@@ -35,13 +32,6 @@ with open('blocked_sites.txt', 'r') as file:
 
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__, static_url_path=STATICURLPATH)
-
-@app.route(PRIVACY_POLICY)
-def privacy():
-    """
-    Display the privacy policy from template
-    """
-    return render_template(PRIVACY_TEMPLATE)
 
 @app.route(APPROUTE_ROOT)
 def index():
