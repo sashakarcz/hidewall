@@ -21,7 +21,7 @@ TEMPLATE = 'index.html'
 JAVASCRIPT = 'service-worker.js'
 CACHE_GOOGLE = 'http://webcache.googleusercontent.com/search?q=cache:'
 CACHE_ARCHIVEORG = 'https://web.archive.org/web/'
-CACHE_ARCHIVE = 'https://archive.is/latest/'
+CACHE_ARCHIVE = 'https://archive.today/latest/'
 STATICURLPATH = '/static'
 APPROUTE_ROOT = '/'
 APPROUTE_JS = '/' + JAVASCRIPT
