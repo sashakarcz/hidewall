@@ -4,7 +4,7 @@
 
 ## About
 
-Hidewall is what powers `hidewall.io`, a web service to bypass most paywalls. Hidewall is a Python Flask app that uses Requests, BeautifulSoup, and web caches to access content that is blocked behind a soft paywall.
+Hidewall is what powers `hidewall.io`, a web service to bypass most paywalls. Hidewall is a Python Flask app that uses Requests, BeautifulSoup, and web caches to access content that is blocked behind a soft paywall. I have built in support for NordVPN for when grabbing content from a WebCache. Set `USEVPN=true` in the Docker Compose file, and then add your credentials to use NordVPN.
 
 You can run this locally via Docker, or use the public version at [`https://hidewall.io`](https://hidewall.io)
 
@@ -51,13 +51,6 @@ The app will be accessable on port `8069` of the Docker host. Included in the Do
 
 ## Support
 Feel free to open a bug here, or email me at [`sasha@starnix.net`](mailto:sasha@starnix.net?subject=[GitHub]%20Hidewall)
-
-## Roadmap
-I want to add Chrome and Firefox extensions that are available for easy download.
-
-`wsj.com` is proving to be interesting, and more work needs to be done on how to access that content.
-
-I am trying to use `archive.today` as the web cache of choice. Currently, hidewall uses WebArchive.
 
 ## Contributing
 Please fork me!
