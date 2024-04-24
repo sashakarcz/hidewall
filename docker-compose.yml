@@ -6,9 +6,7 @@ services:
       - "8069:80"
     restart: unless-stopped
     environment:
-      - "USE_PROXY=true"
-      - "PROXY="
-      - "PROXY_PORT="
+      - "USEVPN=true"
       - "USERNAME="
       - "PASSWORD="
     labels:

@@ -6,13 +6,12 @@ to access content that is blocked behind a soft paywall.
 import logging
 import os
 import re
-from urllib.parse import quote_plus  # Added import
+from urllib.parse import quote_plus
 import requests
 import bjoern
-import socks
-import socket
 from bs4 import BeautifulSoup
-from flask import Flask, redirect, request, render_template, send_from_directory
+from flask import Flask, request, render_template, send_from_directory
+from pynord import PyNord
 
 PORT = int(os.environ.get("PORT", 80))
 
@@ -33,6 +32,9 @@ with open('blocked_sites.txt', 'r') as file:
 
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__, static_url_path=STATICURLPATH)
+
+# Initialize NordVPN
+nordvpn = PyNord()
 
 @app.route(APPROUTE_ROOT)
 def index():
@@ -89,7 +91,7 @@ def is_valid_url(url):
 
 def request_url(url):
     """
-    Download URL via requests and servce it using BeautifulSoup
+    Download URL via requests and serve it using BeautifulSoup
     """
 
     # Define headers to mimic GoogleBot
@@ -112,7 +114,7 @@ def request_url(url):
     for script in soup.find_all('script'):
         script.extract()
 
-   # Render the parsed content as a string
+    # Render the parsed content as a string
     rendered_content = soup.prettify()
 
     # Return the parsed content as a response
@@ -123,57 +125,27 @@ def use_cache(url):
     Uses a web cache to download site, then remove any headers that have been added.
     """
 
-    USE_PROXY = os.getenv("USE_PROXY", "").lower() in ["true", "1", "yes"]
-
-    # Create a socket object with the SOCKS5 proxy
-    if USE_PROXY:
-        SOCKS_PROXY = str(os.environ.get("PROXY", ""))
-        PROXY_PORT = str(os.environ.get("PROXY_PORT", ""))
-        USERNAME = str(os.environ.get("USERNAME", ""))
-        PASSWORD = str(os.environ.get("PASSWORD", ""))
-
-        # Check if PROXY_PORT is empty or not
-        if not PROXY_PORT:
-            # Set a default port if PROXY_PORT is empty
-            PROXY_PORT = "1080"  # Change to your desired default port
-
-        # Convert PROXY_PORT to integer
-        try:
-            PROXY_PORT = int(PROXY_PORT)
-        except ValueError:
-            # Handle the case where PROXY_PORT is not a valid integer
-            logging.error("Invalid value for PROXY_PORT, using default port 1080")
-            PROXY_PORT = 1080  # Change to your desired default port
-
-        # Set the SOCKS5 proxy
-        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, SOCKS_PROXY, PROXY_PORT, True, USERNAME, PASSWORD)
-        socket.socket = socks.socksocket  # Override the default socket with the SOCKS-enabled socket
-    else:
-        pass  # Use default socket
-
-    # Generate the complete query URL
-    base_url = CACHE_ARCHIVE
-    query_url = f"{base_url}{quote_plus(url)}"
-    print(f"Using {query_url} for Cache")
-
-    # Retrieve User-Agent header from the request
-    user_agent = request.headers.get("User-Agent")
-
-    # Define headers dictionary with User-Agent
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-    }
-
     try:
+        # Check if USEVPN environment variable is set to true
+        use_vpn = os.environ.get("USEVPN", "").lower() == "true"
+
+        if use_vpn:
+            # Connect to NordVPN
+            nordvpn.connect()
+
+        # Generate the complete query URL
+        base_url = CACHE_ARCHIVE
+        query_url = f"{base_url}{quote_plus(url)}"
+        print(f"Using {query_url} for Cache")
+
+        # Define headers dictionary with User-Agent
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+        }
+
         response = requests.get(query_url, headers=headers, timeout=60)
         response.raise_for_status()
 
-        # Log the response content for debugging
-        logging.info("Response Content: %s", response.text)
-    
-        # Reset the socket settings to the default
-        socks.setdefaultproxy()
-        
         # Parse the entire page content using BeautifulSoup
         soup = BeautifulSoup(response.text, "html.parser")
 
@@ -189,13 +161,17 @@ def use_cache(url):
         # Return the parsed content as a response
         return rendered_content
 
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         # Log the error for debugging purposes
-        # logging.error("An error occurred: %s", str(e))
-        # Reset the socket settings to the default in case of error
-        socks.setdefaultproxy()
+        logging.error("An error occurred while fetching the content: %s", str(e))
         return "An error occurred while fetching the content", 500
+
+    finally:
+        # Disconnect from NordVPN if connected
+        if use_vpn:
+            nordvpn.disconnect()
 
 if __name__ == "__main__":
     print(f"Starting server on {HOST}:{PORT}")
     bjoern.run(app, HOST, int(PORT))
+
