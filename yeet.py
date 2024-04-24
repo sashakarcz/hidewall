@@ -62,6 +62,8 @@ def search():
             if not is_valid_url(query):
                 return "Invalid URL provided", 400
 
+            query = query.split('?')[0]
+
             rendered_content = request_url(query)  # Capture the result
             if any(site in query for site in blocked_sites):
                 rendered_content = use_cache(query)  # Capture the result
@@ -159,10 +161,8 @@ def use_cache(url):
 
     # Define headers dictionary with User-Agent
     headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
     }
-
-    return redirect(query_url, code=302)
 
     try:
         response = requests.get(query_url, headers=headers, timeout=60)
@@ -191,7 +191,7 @@ def use_cache(url):
 
     except requests.exceptions.RequestException as e:
         # Log the error for debugging purposes
-        logging.error("An error occurred: %s", str(e))
+        # logging.error("An error occurred: %s", str(e))
         # Reset the socket settings to the default in case of error
         socks.setdefaultproxy()
         return "An error occurred while fetching the content", 500
