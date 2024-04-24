@@ -66,6 +66,10 @@ def search():
 
             query = query.split('?')[0]
 
+            # Connect to NordVPN if USEVPN is set to true
+            if os.environ.get("USEVPN", "").lower() == "true":
+                nordvpn.connect()
+
             rendered_content = request_url(query)  # Capture the result
             if any(site in query for site in blocked_sites):
                 rendered_content = use_cache(query)  # Capture the result
@@ -76,6 +80,11 @@ def search():
             # Log the error for debugging purposes
             logging.error("An error occurred: %s", str(an_err))
             return "An error occurred", 500
+
+        finally:
+            # Disconnect from NordVPN if connected
+            if os.environ.get("USEVPN", "").lower() == "true":
+                nordvpn.disconnect()
 
     # Handle the case where query is empty
     return "No query provided", 400
@@ -126,13 +135,6 @@ def use_cache(url):
     """
 
     try:
-        # Check if USEVPN environment variable is set to true
-        use_vpn = os.environ.get("USEVPN", "").lower() == "true"
-
-        if use_vpn:
-            # Connect to NordVPN
-            nordvpn.connect()
-
         # Generate the complete query URL
         base_url = CACHE_ARCHIVE
         query_url = f"{base_url}{quote_plus(url)}"
@@ -165,11 +167,6 @@ def use_cache(url):
         # Log the error for debugging purposes
         logging.error("An error occurred while fetching the content: %s", str(e))
         return "An error occurred while fetching the content", 500
-
-    finally:
-        # Disconnect from NordVPN if connected
-        if use_vpn:
-            nordvpn.disconnect()
 
 if __name__ == "__main__":
     print(f"Starting server on {HOST}:{PORT}")
