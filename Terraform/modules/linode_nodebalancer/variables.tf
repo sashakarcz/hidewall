@@ -11,8 +11,12 @@ variable "region" {
   default     = "us-ord"
 }
 
-variable "instances" {
-  description = "List of strings of Linodes"
+variable "linode_instance_ips" {
+  description = "The IP addresses of the Linode instances"
   type        = list(string)
-  default     = []
+}
+
+variable "linode_instance_ids" {
+  description = "The IDs of the Linode instances"
+  type        = list(string)
 }

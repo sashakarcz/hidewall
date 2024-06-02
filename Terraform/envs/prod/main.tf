@@ -27,23 +27,15 @@ module "instances" {
   root_pass  = var.root_pass
 }
 
-# module "disks" {
-#   source = "../../modules/linode_disks"
-
-#   for_each = local.disks
-
-#   label      = each.value.label
-#   linode_id = module.instances[each.key].id
-# }
-
 
 # Define Linode NodeBalancer Module
 module "my_nodebalancer" {
   source = "../../modules/linode_nodebalancer"
 
-  label        = "lb-hidewall"
-  region       = "us-ord"
-  instances    = [for instance in module.instances : instance.id]
+  label                = "lb-hidewall"
+  region               = "us-ord"
+  linode_instance_ids  = [for hidewall-node in module.instances : hidewall-node.id]
+  linode_instance_ips  = flatten([for hidewall-node in module.instances : hidewall-node.ip_address])
 }
 
 module "firewall_cloudflare" {
@@ -52,7 +44,8 @@ module "firewall_cloudflare" {
   nodebalancers = [module.my_nodebalancer.nodebalancer_id]
 }
 
-# Define Linode Firewall Ingress Module
 module "firewall_ingress" {
-  source = "../../modules/linode_firewall_ingress"
+  source     = "../../modules/linode_firewall_ingress"
+
+  linodes    = [for hidewall-node in module.instances : hidewall-node.id]
 }

@@ -37,3 +37,8 @@ variable "root_pass" {
   type    = string
   default = ""
 }
+
+variable "linode_instance_ips" {
+  type    = list(string)
+  default = []
+}
