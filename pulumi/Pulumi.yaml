@@ -1,0 +1,10 @@
+name: hidewall
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: Python Pulumi program to deploy hidewall
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: python
