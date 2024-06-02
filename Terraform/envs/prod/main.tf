@@ -6,9 +6,9 @@ provider "linode" {
 # Define the inputs for the instance and disks module
 locals {
   instances = {
-    "ord-swarm-1" = { label = "instance1" }
-    "ord-swarm-2" = { label = "instance2" }
-    "ord-swarm-3" = { label = "instance3" }
+    "ord-swarm-1" = { label = "ord-swarm-1" }
+    "ord-swarm-2" = { label = "ord-swarm-2" }
+    "ord-swarm-3" = { label = "ord-swarm-3" }
   }
 
   disks = {
@@ -24,16 +24,17 @@ module "instances" {
   for_each = local.instances
 
   label      = each.value.label
+  root_pass  = var.root_pass
 }
 
-module "disks" {
-  source = "../../modules/linode_disks"
+# module "disks" {
+#   source = "../../modules/linode_disks"
 
-  for_each = local.disks
+#   for_each = local.disks
 
-  label      = each.value.label
-  linode_id = module.instances[each.key].id
-}
+#   label      = each.value.label
+#   linode_id = module.instances[each.key].id
+# }
 
 
 # Define Linode NodeBalancer Module

@@ -32,3 +32,8 @@ variable "image" {
   type    = string
   default = ""
 }
+
+variable "root_pass" {
+  type    = string
+  default = ""
+}
