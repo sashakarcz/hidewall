@@ -1,0 +1,3 @@
+projects:
+- name: hidewall
+  dir: Terraform/envs/prod
