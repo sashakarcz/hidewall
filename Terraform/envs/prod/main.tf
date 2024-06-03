@@ -23,8 +23,9 @@ module "instances" {
 
   for_each = local.instances
 
-  label      = each.value.label
-  root_pass  = var.root_pass
+  label              = each.value.label
+  root_pass          = var.root_pass
+  linode_token       = var.linode_token
 }
 
 
@@ -48,4 +49,18 @@ module "firewall_ingress" {
   source     = "../../modules/linode_firewall_ingress"
 
   linodes    = [for hidewall-node in module.instances : hidewall-node.id]
+}
+
+resource "null_resource" "create_hosts_file" {
+  count = length(module.instances)
+
+  triggers = {
+    instance_id = module.instances[keys(module.instances)[count.index]].id
+  }
+
+  provisioner "local-exec" {
+    command = <<EOF
+    echo "${module.instances[keys(module.instances)[count.index]].ip_address} node-${count.index}" >> hosts
+    EOF
+  }
 }

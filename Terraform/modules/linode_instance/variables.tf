@@ -33,3 +33,20 @@ variable "root_pass" {
   description = "The root password for the Linode instance"
   type        = string
 }
+
+variable "username" {
+  description = "The username for the Linode instance"
+  type        = string
+  default     = "root"
+}
+
+variable "hostname" {
+  description = "The hostname for the Linode instance"
+  type        = string
+  default     = "localhost"
+}
+
+variable "linode_token" {
+  description = "Token for Linode API"
+  type        = string
+}
