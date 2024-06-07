@@ -1,4 +1,5 @@
 # envs/prod/main.tf
+
 provider "linode" {
   token = var.linode_token
 }
@@ -49,6 +50,7 @@ module "firewall_ingress" {
   source     = "../../modules/linode_firewall_ingress"
 
   linodes    = [for hidewall-node in module.instances : hidewall-node.id]
+  allowed_ip = var.allowed_ip
 }
 
 resource "null_resource" "create_hosts_file" {
@@ -63,4 +65,8 @@ resource "null_resource" "create_hosts_file" {
     echo "${module.instances[keys(module.instances)[count.index]].ip_address} node-${count.index}" >> hosts
     EOF
   }
+}
+
+output "instance_public_ips" {
+  value = [for hidewall_node in module.instances : hidewall_node.public_ip]
 }

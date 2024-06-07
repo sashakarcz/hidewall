@@ -1,15 +1,23 @@
 variable "linode_token" {
   description = "Token for Linode API"
   type        = string
+  sensitive   = true
 }
 
 variable "access_key" {
   description = "Token for Linode S3 API"
   type        = string
+  sensitive   = true
 }
 
 variable "secret_key" {
   description = "Secret for Linode S3 API"
+  type        = string
+  sensitive   = true
+}
+
+variable "allowed_ip" {
+  description = "IP allowed for SSH ingress"
   type        = string
 }
 
@@ -35,7 +43,6 @@ variable "image" {
 
 variable "root_pass" {
   type    = string
-  default = ""
 }
 
 variable "linode_instance_ips" {

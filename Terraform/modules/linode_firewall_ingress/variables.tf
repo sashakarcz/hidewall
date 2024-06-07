@@ -12,3 +12,8 @@ variable "nodebalancers" {
   type    = list(number)
   default = []
 }
+
+variable "allowed_ip" {
+  type    = string
+  default = ""
+}

@@ -5,6 +5,14 @@ resource "linode_firewall" "ingress" {
   outbound_policy = "ACCEPT"
 
   inbound {
+    action   = "ACCEPT"
+    protocol = "TCP"
+    ports    = "22"
+    ipv4     = [var.allowed_ip]
+    label    = "allow-from-home-inbound-SSH"
+  }
+
+  inbound {
     action   = "DROP"
     protocol = "TCP"
     ports    = "22"
