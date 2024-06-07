@@ -49,3 +49,11 @@ variable "linode_instance_ips" {
   type    = list(string)
   default = []
 }
+
+variable "ssl_key" {
+  type = string
+}
+
+variable "ssl_cert" {
+  type = string
+}

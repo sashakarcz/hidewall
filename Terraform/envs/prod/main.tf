@@ -38,6 +38,8 @@ module "my_nodebalancer" {
   region               = "us-ord"
   linode_instance_ids  = [for hidewall-node in module.instances : hidewall-node.id]
   linode_instance_ips  = flatten([for hidewall-node in module.instances : hidewall-node.ip_address])
+  ssl_key              = file(var.ssl_key)
+  ssl_cert             = file(var.ssl_cert)
 }
 
 module "firewall_cloudflare" {

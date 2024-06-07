@@ -20,3 +20,11 @@ variable "linode_instance_ids" {
   description = "The IDs of the Linode instances"
   type        = list(string)
 }
+
+variable "ssl_key" {
+  type = string
+}
+
+variable "ssl_cert" {
+  type = string
+}

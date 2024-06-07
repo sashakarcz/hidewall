@@ -6,9 +6,11 @@ resource "linode_nodebalancer" "hidewall-lb" {
 
 resource "linode_nodebalancer_config" "config" {
   nodebalancer_id = linode_nodebalancer.hidewall-lb.id
-  protocol        = "http"
-  port            = 8080
+  protocol        = "https"
+  port            = 443
   check           = "connection"
+  ssl_cert        = var.ssl_cert
+  ssl_key         = var.ssl_key
 }
 
 resource "linode_nodebalancer_node" "node" {
