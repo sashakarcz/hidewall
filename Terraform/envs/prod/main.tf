@@ -66,7 +66,3 @@ resource "null_resource" "create_hosts_file" {
     EOF
   }
 }
-
-output "instance_public_ips" {
-  value = [for hidewall_node in module.instances : hidewall_node.public_ip]
-}
