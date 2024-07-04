@@ -1,6 +1,5 @@
 # Some sites don't play well with python requests. Those sites go here, and we try to pull content from a web cache
 bloomberg.com
-desmoinesregister.com
 telegraph.co.uk
 theatlantic.com
 washingtonpost.com
