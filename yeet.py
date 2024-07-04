@@ -98,6 +98,22 @@ def is_valid_url(url):
     pattern = re.compile(r'^(https?://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|])')
     return bool(pattern.match(url))
 
+def decompress_content(response):
+    """
+    Decompress response content if needed.
+    """
+    try:
+        if 'Content-Encoding' in response.headers:
+            if response.headers['Content-Encoding'] == 'gzip':
+                return gzip.decompress(response.content)
+            elif response.headers['Content-Encoding'] == 'br':
+                return brotli.decompress(response.content)
+    except Exception as e:
+        logging.error("Decompression failed: %s", str(e))
+    
+    # Fall back to original content if decompression fails
+    return response.content
+
 def request_url(url):
     """
     Download URL via requests and serve it using BeautifulSoup
@@ -115,16 +131,8 @@ def request_url(url):
 
     response = requests.get(url, headers=headers, timeout=10)
 
-    # Decompress response content if needed
-    if 'Content-Encoding' in response.headers:
-        if response.headers['Content-Encoding'] == 'gzip':
-            response_content = gzip.decompress(response.content)
-        elif response.headers['Content-Encoding'] == 'br':
-            response_content = brotli.decompress(response.content)
-        else:
-            response_content = response.content
-    else:
-        response_content = response.content
+    # Decompress response content
+    response_content = decompress_content(response)
 
     # Parse the entire page content using BeautifulSoup
     soup = BeautifulSoup(response_content, "html.parser")
@@ -157,16 +165,8 @@ def use_cache(url):
         response = requests.get(query_url, headers=headers, timeout=60)
         response.raise_for_status()
 
-        # Decompress response content if needed
-        if 'Content-Encoding' in response.headers:
-            if response.headers['Content-Encoding'] == 'gzip':
-                response_content = gzip.decompress(response.content)
-            elif response.headers['Content-Encoding'] == 'br':
-                response_content = brotli.decompress(response.content)
-            else:
-                response_content = response.content
-        else:
-            response_content = response.content
+        # Decompress response content
+        response_content = decompress_content(response)
 
         # Parse the entire page content using BeautifulSoup
         soup = BeautifulSoup(response_content, "html.parser")
@@ -191,4 +191,3 @@ def use_cache(url):
 if __name__ == "__main__":
     print(f"Starting server on {HOST}:{PORT}")
     bjoern.run(app, HOST, int(PORT))
-
