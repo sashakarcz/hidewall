@@ -9,8 +9,8 @@ import re
 import requests
 import bjoern
 from bs4 import BeautifulSoup
-from flask import Flask, request, render_template, send_from_directory
-from urllib.parse import quote_plus
+from flask import Flask, request, render_template, send_from_directory, url_for
+from urllib.parse import quote_plus, urljoin
 from pynord import PyNord
 import gzip
 import brotli
@@ -27,6 +27,7 @@ STATICURLPATH = '/static'
 APPROUTE_ROOT = '/'
 APPROUTE_JS = '/' + JAVASCRIPT
 APPROUTE_APP = '/yeet'
+PLACEHOLDER_IMAGE_URL = 'https://via.placeholder.com/150'  # URL to a placeholder image
 
 # Read the list of blocked sites from the file
 with open('blocked_sites.txt', 'r') as file:
@@ -141,6 +142,15 @@ def request_url(url):
     for script in soup.find_all('script'):
         script.extract()
 
+    # Ensure all image URLs are absolute and accessible
+    for img in soup.find_all('img'):
+        if 'src' in img.attrs:
+            img_url = img['src']
+            if not img_url.startswith('http'):
+                img['src'] = urljoin(url, img_url)
+        else:
+            img['src'] = PLACEHOLDER_IMAGE_URL
+
     # Render the parsed content as a string
     rendered_content = soup.prettify()
 
@@ -170,6 +180,15 @@ def use_cache(url):
 
         # Parse the entire page content using BeautifulSoup
         soup = BeautifulSoup(response_content, "html.parser")
+
+        # Ensure all image URLs are absolute and accessible
+        for img in soup.find_all('img'):
+            if 'src' in img.attrs:
+                img_url = img['src']
+                if not img_url.startswith('http'):
+                    img['src'] = urljoin(url, img_url)
+            else:
+                img['src'] = PLACEHOLDER_IMAGE_URL
 
         # Remove header elements
         selectors_to_remove = '[id*="google-cache-hdr"], [id*="wm-ipp"], [id*="HEADER"]'
