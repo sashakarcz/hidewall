@@ -6,12 +6,14 @@ to access content that is blocked behind a soft paywall.
 import logging
 import os
 import re
-from urllib.parse import quote_plus
 import requests
 import bjoern
 from bs4 import BeautifulSoup
 from flask import Flask, request, render_template, send_from_directory
+from urllib.parse import quote_plus
 from pynord import PyNord
+import gzip
+import brotli
 
 PORT = int(os.environ.get("PORT", 80))
 
@@ -55,7 +57,6 @@ def search():
     """
     Checks the URL, then decides to use a web cache or requests to render content
     """
-
     query = request.args.get("y", "")
 
     if query:
@@ -93,7 +94,6 @@ def is_valid_url(url):
     """
     Validate if a given URL is valid.
     """
-
     # Use a regex pattern for basic URL validation
     pattern = re.compile(r'^(https?://[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|])')
     return bool(pattern.match(url))
@@ -102,7 +102,6 @@ def request_url(url):
     """
     Download URL via requests and serve it using BeautifulSoup
     """
-
     # Define headers to mimic GoogleBot
     headers = {
         'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
@@ -116,8 +115,19 @@ def request_url(url):
 
     response = requests.get(url, headers=headers, timeout=10)
 
+    # Decompress response content if needed
+    if 'Content-Encoding' in response.headers:
+        if response.headers['Content-Encoding'] == 'gzip':
+            response_content = gzip.decompress(response.content)
+        elif response.headers['Content-Encoding'] == 'br':
+            response_content = brotli.decompress(response.content)
+        else:
+            response_content = response.content
+    else:
+        response_content = response.content
+
     # Parse the entire page content using BeautifulSoup
-    soup = BeautifulSoup(response.text, "html.parser")
+    soup = BeautifulSoup(response_content, "html.parser")
 
     # Remove all <script> tags and their contents
     for script in soup.find_all('script'):
@@ -133,7 +143,6 @@ def use_cache(url):
     """
     Uses a web cache to download site, then remove any headers that have been added.
     """
-
     try:
         # Generate the complete query URL
         base_url = CACHE_ARCHIVE
@@ -148,8 +157,19 @@ def use_cache(url):
         response = requests.get(query_url, headers=headers, timeout=60)
         response.raise_for_status()
 
+        # Decompress response content if needed
+        if 'Content-Encoding' in response.headers:
+            if response.headers['Content-Encoding'] == 'gzip':
+                response_content = gzip.decompress(response.content)
+            elif response.headers['Content-Encoding'] == 'br':
+                response_content = brotli.decompress(response.content)
+            else:
+                response_content = response.content
+        else:
+            response_content = response.content
+
         # Parse the entire page content using BeautifulSoup
-        soup = BeautifulSoup(response.text, "html.parser")
+        soup = BeautifulSoup(response_content, "html.parser")
 
         # Remove header elements
         selectors_to_remove = '[id*="google-cache-hdr"], [id*="wm-ipp"], [id*="HEADER"]'
