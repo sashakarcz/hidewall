@@ -1,12 +1,12 @@
 version: "3"
 services:
   paywall:
-    image: astrognome/hidewall
+    image: hidewall:dev
     ports:
-      - "8069:80"
+      - "8070:80"
     restart: unless-stopped
     environment:
-      - "USEVPN=true"
+      - "USEVPN=false"
       - "USERNAME="
       - "PASSWORD="
     labels:

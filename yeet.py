@@ -9,7 +9,7 @@ import re
 import requests
 import bjoern
 from bs4 import BeautifulSoup
-from flask import Flask, request, render_template, send_from_directory, url_for
+from flask import Flask, request, render_template, send_from_directory
 from urllib.parse import quote_plus, urljoin
 from pynord import PyNord
 import gzip
@@ -27,7 +27,6 @@ STATICURLPATH = '/static'
 APPROUTE_ROOT = '/'
 APPROUTE_JS = '/' + JAVASCRIPT
 APPROUTE_APP = '/yeet'
-PLACEHOLDER_IMAGE_URL = 'https://via.placeholder.com/150'  # URL to a placeholder image
 
 # Read the list of blocked sites from the file
 with open('blocked_sites.txt', 'r') as file:
@@ -115,6 +114,54 @@ def decompress_content(response):
     # Fall back to original content if decompression fails
     return response.content
 
+def handle_images_and_asides(soup, base_url):
+    """
+    Process images and remove aside elements in the BeautifulSoup object.
+    """
+
+    # This is logic to get desmoinesregister.com working
+    for img in soup.find_all('img'):
+        if 'data-gl-src' in img.attrs:
+            img['src'] = urljoin(base_url, img['data-gl-src'])
+            del img['data-gl-src']
+        if 'data-gl-srcset' in img.attrs:
+            img['srcset'] = urljoin(base_url, img['data-gl-srcset'])
+            del img['data-gl-srcset']
+        elif 'src' in img.attrs:
+            img['src'] = urljoin(base_url, img['src']) if not img['src'].startswith('http') else img['src']
+        if 'srcset' in img.attrs and not img['srcset'].startswith('http'):
+            img['srcset'] = urljoin(base_url, img['srcset'])
+
+    # This is an attempt to build out similar logic for nytimes
+    for figure in soup.find_all('figure'):
+        #logging.info(f"Processing figure element: {figure}")
+        srcset_img = None
+        for source in figure.find_all('source'):
+            if 'srcset' in source.attrs:
+                srcset_img = source['srcset'].split(",")[0].split()[0]  # Get the first URL in srcset
+                break
+        if srcset_img:
+            img_tag = figure.find('img')
+            if img_tag:
+                img_tag['src'] = srcset_img
+                #logging.info(f"Updated figure img src to: {srcset_img}")
+            else:
+                img_tag = soup.new_tag('img', src=srcset_img)
+                figure.append(img_tag)
+                #logging.info(f"Appended new img tag with src: {srcset_img}")
+
+    # This gets rid of embeded videos
+    for aside in soup.find_all('aside'):
+        aside.decompose()
+
+def handle_slideshows(soup, base_url):
+    """
+    Process slideshow links to ensure they have the full URL.
+    """
+    for a in soup.find_all('a', href=True):
+        if a['href'].startswith('/picture-gallery'):
+            a['href'] = urljoin(base_url, a['href'])
+
 def request_url(url):
     """
     Download URL via requests and serve it using BeautifulSoup
@@ -142,14 +189,9 @@ def request_url(url):
     for script in soup.find_all('script'):
         script.extract()
 
-    # Ensure all image URLs are absolute and accessible
-    for img in soup.find_all('img'):
-        if 'src' in img.attrs:
-            img_url = img['src']
-            if not img_url.startswith('http'):
-                img['src'] = urljoin(url, img_url)
-        else:
-            img['src'] = PLACEHOLDER_IMAGE_URL
+    # Handle images, aside elements, and slideshows
+    handle_images_and_asides(soup, url)
+    handle_slideshows(soup, url)
 
     # Render the parsed content as a string
     rendered_content = soup.prettify()
@@ -181,14 +223,9 @@ def use_cache(url):
         # Parse the entire page content using BeautifulSoup
         soup = BeautifulSoup(response_content, "html.parser")
 
-        # Ensure all image URLs are absolute and accessible
-        for img in soup.find_all('img'):
-            if 'src' in img.attrs:
-                img_url = img['src']
-                if not img_url.startswith('http'):
-                    img['src'] = urljoin(url, img_url)
-            else:
-                img['src'] = PLACEHOLDER_IMAGE_URL
+        # Handle images, aside elements, and slideshows
+        handle_images_and_asides(soup, url)
+        handle_slideshows(soup, url)
 
         # Remove header elements
         selectors_to_remove = '[id*="google-cache-hdr"], [id*="wm-ipp"], [id*="HEADER"]'
