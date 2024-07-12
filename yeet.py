@@ -9,7 +9,7 @@ import re
 import requests
 import bjoern
 from bs4 import BeautifulSoup
-from flask import Flask, request, render_template, send_from_directory
+from flask import Flask, request, render_template, send_from_directory, redirect, url_for
 from urllib.parse import quote_plus, urljoin
 from pynord import PyNord
 import gzip
@@ -71,10 +71,10 @@ def search():
             if os.environ.get("USEVPN", "").lower() == "true":
                 nordvpn.connect()
 
-            rendered_content = request_url(query)  # Capture the result
             if any(site in query for site in blocked_sites):
-                rendered_content = use_cache(query)  # Capture the result
+                return use_cache_iframe(query)
 
+            rendered_content = request_url(query)  # Capture the result
             return rendered_content  # Return the result
 
         except requests.exceptions.RequestException as an_err:
@@ -134,7 +134,6 @@ def handle_images_and_asides(soup, base_url):
 
     # This is an attempt to build out similar logic for nytimes
     for figure in soup.find_all('figure'):
-        #logging.info(f"Processing figure element: {figure}")
         srcset_img = None
         for source in figure.find_all('source'):
             if 'srcset' in source.attrs:
@@ -144,11 +143,9 @@ def handle_images_and_asides(soup, base_url):
             img_tag = figure.find('img')
             if img_tag:
                 img_tag['src'] = srcset_img
-                #logging.info(f"Updated figure img src to: {srcset_img}")
             else:
                 img_tag = soup.new_tag('img', src=srcset_img)
                 figure.append(img_tag)
-                #logging.info(f"Appended new img tag with src: {srcset_img}")
 
     # This gets rid of embeded videos
     for aside in soup.find_all('aside'):
@@ -199,50 +196,14 @@ def request_url(url):
     # Return the parsed content as a response
     return rendered_content
 
-def use_cache(url):
+def use_cache_iframe(url):
     """
-    Uses a web cache to download site, then remove any headers that have been added.
+    Uses an iframe to display web archive content.
     """
-    try:
-        # Generate the complete query URL
-        base_url = CACHE_ARCHIVE
-        query_url = f"{base_url}{quote_plus(url)}"
-        print(f"Using {query_url} for Cache")
-
-        # Define headers dictionary with User-Agent
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
-        }
-
-        response = requests.get(query_url, headers=headers, timeout=60)
-        response.raise_for_status()
-
-        # Decompress response content
-        response_content = decompress_content(response)
-
-        # Parse the entire page content using BeautifulSoup
-        soup = BeautifulSoup(response_content, "html.parser")
-
-        # Handle images, aside elements, and slideshows
-        handle_images_and_asides(soup, url)
-        handle_slideshows(soup, url)
-
-        # Remove header elements
-        selectors_to_remove = '[id*="google-cache-hdr"], [id*="wm-ipp"], [id*="HEADER"]'
-        elements_to_remove = soup.select(selectors_to_remove)
-        for element in elements_to_remove:
-            element.extract()
-
-        # Render the parsed content as a string
-        rendered_content = soup.prettify()
-
-        # Return the parsed content as a response
-        return rendered_content
-
-    except Exception as e:
-        # Log the error for debugging purposes
-        logging.error("An error occurred while fetching the content: %s", str(e))
-        return "An error occurred while fetching the content", 500
+    base_url = CACHE_ARCHIVE
+    query_url = f"{base_url}{quote_plus(url)}"
+    iframe_html = f'<iframe src="{query_url}" width="100%" height="1000px"></iframe>'
+    return iframe_html
 
 if __name__ == "__main__":
     print(f"Starting server on {HOST}:{PORT}")
