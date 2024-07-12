@@ -9,7 +9,7 @@ import re
 import requests
 import bjoern
 from bs4 import BeautifulSoup
-from flask import Flask, request, render_template, send_from_directory, redirect, url_for
+from flask import Flask, request, render_template, send_from_directory
 from urllib.parse import quote_plus, urljoin
 from pynord import PyNord
 import gzip
@@ -27,6 +27,8 @@ STATICURLPATH = '/static'
 APPROUTE_ROOT = '/'
 APPROUTE_JS = '/' + JAVASCRIPT
 APPROUTE_APP = '/yeet'
+GOOGLEBOT = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+SOLARIS = "Mozilla/3.0 (SunOS 5.6 sun4m; U)"
 
 # Read the list of blocked sites from the file
 with open('blocked_sites.txt', 'r') as file:
@@ -72,9 +74,11 @@ def search():
                 nordvpn.connect()
 
             if any(site in query for site in blocked_sites):
-                return use_cache_iframe(query)
+                user_agent = SOLARIS
+            else:
+                user_agent = GOOGLEBOT
 
-            rendered_content = request_url(query)  # Capture the result
+            rendered_content = request_url(query, user_agent)  # Capture the result
             return rendered_content  # Return the result
 
         except requests.exceptions.RequestException as an_err:
@@ -147,7 +151,7 @@ def handle_images_and_asides(soup, base_url):
                 img_tag = soup.new_tag('img', src=srcset_img)
                 figure.append(img_tag)
 
-    # This gets rid of embeded videos
+    # This gets rid of embedded videos
     for aside in soup.find_all('aside'):
         aside.decompose()
 
@@ -159,13 +163,13 @@ def handle_slideshows(soup, base_url):
         if a['href'].startswith('/picture-gallery'):
             a['href'] = urljoin(base_url, a['href'])
 
-def request_url(url):
+def request_url(url, useragent):
     """
     Download URL via requests and serve it using BeautifulSoup
     """
-    # Define headers to mimic GoogleBot
+    # Define headers to mimic other browsers/bots
     headers = {
-        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        'User-Agent': useragent,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
         'Accept-Encoding': 'gzip, deflate, br',
@@ -195,15 +199,6 @@ def request_url(url):
 
     # Return the parsed content as a response
     return rendered_content
-
-def use_cache_iframe(url):
-    """
-    Uses an iframe to display web archive content.
-    """
-    base_url = CACHE_ARCHIVE
-    query_url = f"{base_url}{quote_plus(url)}"
-    iframe_html = f'<iframe src="{query_url}" width="100%" height="1000px"></iframe>'
-    return iframe_html
 
 if __name__ == "__main__":
     print(f"Starting server on {HOST}:{PORT}")
