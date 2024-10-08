@@ -15,6 +15,14 @@ from pynord import PyNord
 import gzip
 import brotli
 
+# OpenTelemetry imports
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+
 PORT = int(os.environ.get("PORT", 80))
 
 HOST = '0.0.0.0'
@@ -37,61 +45,66 @@ with open('blocked_sites.txt', 'r') as file:
 logging.basicConfig(level=logging.INFO)
 app = Flask(__name__, static_url_path=STATICURLPATH)
 
+# Initialize Flask app
+app = Flask(__name__)
+
+# Optional OpenTelemetry instrumentation
+if os.environ.get("ENABLE_OTEL", "").lower() == "true":
+    # Setup OpenTelemetry tracing
+    resource = Resource(attributes={
+        "service.name": "hidewall-flask-app"
+    })
+    provider = TracerProvider(resource=resource)
+    exporter = OTLPSpanExporter()
+    span_processor = BatchSpanProcessor(exporter)
+    provider.add_span_processor(span_processor)
+
+    trace.set_tracer_provider(provider)
+
+    # Instrument Flask
+    FlaskInstrumentor().instrument_app(app)
+
 # Initialize NordVPN
 nordvpn = PyNord()
 
-@app.route(APPROUTE_ROOT)
+@app.route('/')
 def index():
-    """
-    Display the homepage from template
-    """
-    return render_template(TEMPLATE)
+    """Display the homepage from template."""
+    return render_template('index.html')
 
-@app.route(APPROUTE_JS)
+@app.route('/service-worker.js')
 def service_worker():
-    """
-    Present the JS for the browser
-    """
-    return send_from_directory('.', JAVASCRIPT)
+    """Serve the service worker JS."""
+    return send_from_directory('.', 'service-worker.js')
 
-@app.route(APPROUTE_APP)
+@app.route('/yeet')
 def search():
-    """
-    Checks the URL, then decides to use a web cache or requests to render content
-    """
+    """Process the search and handle paywall bypass."""
     query = request.args.get("y", "")
-
     if query:
         try:
-            # Validate the input URL
             if not is_valid_url(query):
                 return "Invalid URL provided", 400
-
             query = query.split('?')[0]
 
-            # Connect to NordVPN if USEVPN is set to true
             if os.environ.get("USEVPN", "").lower() == "true":
                 nordvpn.connect()
 
             if any(site in query for site in blocked_sites):
-                user_agent = SOLARIS
+                user_agent = "Mozilla/3.0 (SunOS 5.6 sun4m; U)"
             else:
-                user_agent = GOOGLEBOT
+                user_agent = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
 
-            rendered_content = request_url(query, user_agent)  # Capture the result
-            return rendered_content  # Return the result
+            return request_url(query, user_agent)
 
         except requests.exceptions.RequestException as an_err:
-            # Log the error for debugging purposes
             logging.error("An error occurred: %s", str(an_err))
             return "An error occurred", 500
 
         finally:
-            # Disconnect from NordVPN if connected
             if os.environ.get("USEVPN", "").lower() == "true":
                 nordvpn.disconnect()
 
-    # Handle the case where query is empty
     return "No query provided", 400
 
 def is_valid_url(url):

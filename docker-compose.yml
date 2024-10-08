@@ -1,7 +1,6 @@
-version: "3"
 services:
   paywall:
-    image: hidewall:dev
+    image: hidewall:latest
     ports:
       - "8070:80"
     restart: unless-stopped
@@ -9,5 +8,7 @@ services:
       - "USEVPN=false"
       - "USERNAME="
       - "PASSWORD="
+      - "ENABLE_OTEL=false"
+      - "OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317"
     labels:
       - "traefik.http.routers.paywall.rule=Host(`hostname`)"
