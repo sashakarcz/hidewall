@@ -1,6 +1,6 @@
 bjoern
 brotli
-requests==2.32.0
+requests==2.32.2
 beautifulsoup4
 Flask
 pynord
@@ -10,3 +10,7 @@ opentelemetry-sdk
 opentelemetry-instrumentation
 opentelemetry-instrumentation-flask
 opentelemetry-exporter-otlp
+numpy>=1.22.2 # not directly required, pinned by Snyk to avoid a vulnerability
+setuptools>=70.0.0 # not directly required, pinned by Snyk to avoid a vulnerability
+urllib3>=2.2.2 # not directly required, pinned by Snyk to avoid a vulnerability
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
