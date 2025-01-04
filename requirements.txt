@@ -3,8 +3,6 @@ brotli
 requests==2.32.2
 beautifulsoup4
 Flask
-pynord
-pandas
 opentelemetry-api
 opentelemetry-sdk
 opentelemetry-instrumentation

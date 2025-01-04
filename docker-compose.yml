@@ -1,13 +1,10 @@
 services:
   paywall:
-    image: hidewall:latest
+    image: astrognome/hidewall:latest
     ports:
-      - "8070:80"
+      - "8069:80"
     restart: unless-stopped
     environment:
-      - "USEVPN=false"
-      - "USERNAME="
-      - "PASSWORD="
       - "ENABLE_OTEL=false"
       - "OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317"
     labels:
