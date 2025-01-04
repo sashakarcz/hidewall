@@ -1,5 +1,5 @@
-FROM python
-LABEL version="2.2"
+FROM python:alpine
+LABEL version="3.0"
 LABEL org.opencontainers.image.authors="sasha@starnix.net"
 
 ENV PORT 80
@@ -12,15 +12,25 @@ ENV APP_HOME /app
 WORKDIR /app
 COPY . /app/
 
-RUN ln -sf /usr/share/zoneinfo/America/Chicago /etc/localtime
+# Set timezone
+RUN apk add --no-cache tzdata \
+ && cp /usr/share/zoneinfo/America/Chicago /etc/localtime \
+ && echo "America/Chicago" > /etc/timezone
 
-RUN apt-get -qq update
-RUN apt-get -qq install build-essential python3-dev libev-dev curl python-is-python3
+# Install dependencies
+RUN apk add --no-cache \
+    build-base \
+    python3-dev \
+    libev-dev \
+    curl \
+    bash
 
 # Set display port to avoid crash
 ENV DISPLAY=:99
 
+# Upgrade pip and install requirements
 RUN python -m pip install --upgrade pip setuptools wheel
 RUN python -m pip install --no-cache-dir -r requirements.txt
+
 CMD ["python", "yeet.py"]
 
