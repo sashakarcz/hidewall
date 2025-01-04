@@ -4,7 +4,7 @@
 
 ## About
 
-Hidewall is what powers `hidewall.io`, a web service to bypass most paywalls. Hidewall is a Python Flask app that uses Requests, BeautifulSoup, and web caches to access content that is blocked behind a soft paywall. I have built in support for NordVPN for when grabbing content from a WebCache.
+Hidewall is what powers `hidewall.io`, a web service to bypass most paywalls. Hidewall is a Python Flask app that uses Requests, BeautifulSoup, and web caches to access content that is blocked behind a soft paywall.
 
 You can run this locally via Docker, or use the public version at [`https://hidewall.io`](https://hidewall.io)
 
