@@ -10,7 +10,7 @@ You can run this locally via Docker, or use the public version at [`https://hide
 
 ## How to use
 
-Hide wall has a simple web UI where you may enter your requested URL that is blocked by a paywall. You can also pass the URL you want to `https://hidewall.io/yeet?y=`.
+Hidewall has a simple web UI where you may enter your requested URL that is blocked by a paywall. You can also pass the URL you want to `https://hidewall.io/yeet?y=`.
 
 ### Android
 This can be installed as a Progressive Web App (PWA). If you visit [`https://hidewall.io`](https://hidewall.io), you will be prompted to "Add Hidewalls to Home screen". This will download a PWA version that you can use to share blocked content to.
