@@ -11,7 +11,6 @@ import bjoern
 from bs4 import BeautifulSoup
 from flask import Flask, request, render_template, send_from_directory
 from urllib.parse import quote_plus, urljoin
-from pynord import PyNord
 import gzip
 import brotli
 
@@ -64,9 +63,6 @@ if os.environ.get("ENABLE_OTEL", "").lower() == "true":
     # Instrument Flask
     FlaskInstrumentor().instrument_app(app)
 
-# Initialize NordVPN
-nordvpn = PyNord()
-
 @app.route('/')
 def index():
     """Display the homepage from template."""
@@ -87,9 +83,6 @@ def search():
                 return "Invalid URL provided", 400
             query = query.split('?')[0]
 
-            if os.environ.get("USEVPN", "").lower() == "true":
-                nordvpn.connect()
-
             if any(site in query for site in blocked_sites):
                 user_agent = "Mozilla/3.0 (SunOS 5.6 sun4m; U)"
             else:
@@ -100,10 +93,6 @@ def search():
         except requests.exceptions.RequestException as an_err:
             logging.error("An error occurred: %s", str(an_err))
             return "An error occurred", 500
-
-        finally:
-            if os.environ.get("USEVPN", "").lower() == "true":
-                nordvpn.disconnect()
 
     return "No query provided", 400
 
