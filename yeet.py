@@ -53,7 +53,7 @@ APP_ROUTE_BYPASS = '/yeet'  # Route for paywall bypass requests.
 # User-Agent strings used for web requests.
 USER_AGENT_GOOGLEBOT = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
 # A more modern generic user agent might be preferable for general Browse.
-USER_AGENT_GENERIC = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+USER_AGENT_GENERIC = "Mozilla/5.0 (PlayStation; PlayStation 5/6.50) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.4 Safari/605.1.15"
 # User-Agent string for Twitter bot
 USER_AGENT_TWITTERBOT = "Twitterbot/1.0"
 
@@ -309,12 +309,12 @@ def bypass_paywall():
     # to ensure consistency with entries in 'blocked_sites.txt'.
     clean_url = query_url.split('?')[0].split('#')[0]
 
-    user_agent = USER_AGENT_GENERIC
+    user_agent = USER_AGENT_TWITTERBOT
     if any(site in clean_url for site in BLOCKED_SITES):
         user_agent = USER_AGENT_TWITTERBOT
-        logging.info(f"Using Twitterbot user agent for blocked site: {clean_url}")
+        logging.info(f"Using Generic user agent for blocked site: {clean_url}")
     else:
-        logging.info(f"Using generic user agent for: {clean_url}")
+        logging.info(f"Using Twitterbot user agent for: {clean_url}")
 
     try:
         rendered_content = fetch_and_process_url(clean_url, user_agent)
