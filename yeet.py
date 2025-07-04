@@ -5,7 +5,7 @@ and modify HTML, effectively making paywalled content accessible.
 
 The application dynamically adjusts its User-Agent header based on whether the
 requested site is identified as a 'blocked site' (i.e., known to have a paywall).
-For blocked sites, it mimics Googlebot to potentially access content that would
+For blocked sites, it mimics Twitterbot to potentially access content that would
 otherwise be restricted.
 
 Optional OpenTelemetry tracing can be enabled via environment variables for
@@ -54,6 +54,8 @@ APP_ROUTE_BYPASS = '/yeet'  # Route for paywall bypass requests.
 USER_AGENT_GOOGLEBOT = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
 # A more modern generic user agent might be preferable for general Browse.
 USER_AGENT_GENERIC = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"
+# User-Agent string for Twitter bot
+USER_AGENT_TWITTERBOT = "Twitterbot/1.0"
 
 # Read the list of blocked sites from a file.
 # Each line in 'blocked_sites.txt' should contain a part of a URL
@@ -285,7 +287,7 @@ def bypass_paywall():
     containing the URL to process.
 
     The function validates the URL, determines the appropriate User-Agent
-    (Googlebot for blocked sites, generic for others), fetches and processes
+    (Twitterbot for blocked sites, generic for others), fetches and processes
     the content, and returns the modified HTML.
 
     Returns:
@@ -309,8 +311,8 @@ def bypass_paywall():
 
     user_agent = USER_AGENT_GENERIC
     if any(site in clean_url for site in BLOCKED_SITES):
-        user_agent = USER_AGENT_GOOGLEBOT
-        logging.info(f"Using Googlebot user agent for blocked site: {clean_url}")
+        user_agent = USER_AGENT_TWITTERBOT
+        logging.info(f"Using Twitterbot user agent for blocked site: {clean_url}")
     else:
         logging.info(f"Using generic user agent for: {clean_url}")
 
