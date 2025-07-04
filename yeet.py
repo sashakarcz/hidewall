@@ -24,15 +24,16 @@ import bjoern
 from bs4 import BeautifulSoup
 from flask import Flask, request, render_template, send_from_directory
 
-# OpenTelemetry imports (optional)
-# These imports are conditionally used if OpenTelemetry is enabled.
-# They are placed here for clarity of what they belong to.
+# --- OpenTelemetry Imports ---
+# These imports are now at the top-level.
+# They will always be attempted when the script starts.
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
-from opentelmetry.sdk.resources import Resource
-from opentelometry.sdk.trace.export import BatchSpanProcessor
-from opentelometry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelometry.instrumentation.flask import FlaskInstrumentor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+# --- End OpenTelemetry Imports ---
 
 # --- Configuration ---
 # Standard port for web applications, configurable via environment variable.
@@ -72,18 +73,25 @@ logging.basicConfig(level=logging.INFO)
 app = Flask(__name__, static_url_path=STATIC_URL_PATH)
 
 # Optional OpenTelemetry instrumentation setup.
-# Enabled by setting the ENABLE_OTEL environment variable to "true".
+# Only the *setup and instrumentation logic* is conditional now.
 if os.environ.get("ENABLE_OTEL", "").lower() == "true":
-    resource = Resource(attributes={
-        "service.name": "hidewall-flask-app"
-    })
-    provider = TracerProvider(resource=resource)
-    exporter = OTLPSpanExporter()
-    span_processor = BatchSpanProcessor(exporter)
-    provider.add_span_processor(span_processor)
-    trace.set_tracer_provider(provider)
-    FlaskInstrumentor().instrument_app(app)
-    logging.info("OpenTelemetry tracing enabled.")
+    logging.info("OpenTelemetry ENABLE_OTEL environment variable is true. Attempting to set up tracing.")
+    try:
+        resource = Resource(attributes={
+            "service.name": "hidewall-flask-app"
+        })
+        provider = TracerProvider(resource=resource)
+        exporter = OTLPSpanExporter()
+        span_processor = BatchSpanProcessor(exporter)
+        provider.add_span_processor(span_processor)
+        trace.set_tracer_provider(provider)
+        FlaskInstrumentor().instrument_app(app)
+        logging.info("OpenTelemetry tracing enabled successfully.")
+    except Exception as e:
+        logging.error(f"Failed to initialize OpenTelemetry tracing: {e}", exc_info=True)
+        logging.warning("OpenTelemetry tracing will be disabled due to initialization error.")
+else:
+    logging.info("OpenTelemetry ENABLE_OTEL environment variable is not set to 'true'. Tracing is disabled.")
 
 
 # --- Helper Functions ---
