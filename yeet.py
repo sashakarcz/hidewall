@@ -311,7 +311,7 @@ def bypass_paywall():
 
     user_agent = USER_AGENT_TWITTERBOT
     if any(site in clean_url for site in BLOCKED_SITES):
-        user_agent = USER_AGENT_TWITTERBOT
+        user_agent = USER_AGENT_GENERIC
         logging.info(f"Using Generic user agent for blocked site: {clean_url}")
     else:
         logging.info(f"Using Twitterbot user agent for: {clean_url}")
