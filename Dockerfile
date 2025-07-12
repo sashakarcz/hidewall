@@ -1,41 +1,66 @@
-# Use a Debian-based slim Python image for better compatibility
-FROM python:3.9-slim-buster
-LABEL version="4.0"
+# Multi-stage build for Go application
+FROM golang:1.21-alpine AS builder
+
+LABEL version="5.0"
 LABEL org.opencontainers.image.authors="sasha@starnix.net"
+LABEL description="Hidewall - Go version for paywall bypass"
 
-ENV PORT 80
-
-# Allow statements and log messages to immediately appear in the logs
-ENV PYTHONUNBUFFERED True
-
-# Copy local code to the container image.
-ENV APP_HOME /app
+# Set working directory
 WORKDIR /app
-COPY . /app/
+
+# Install git (needed for go modules)
+RUN apk add --no-cache git
+
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o hidewall .
+
+# Final stage - minimal runtime image
+FROM alpine:latest
+
+# Install ca-certificates for HTTPS requests and timezone data
+RUN apk --no-cache add ca-certificates tzdata
 
 # Set timezone
-# For Debian-based images, tzdata package is usually sufficient
-RUN apt-get update && apt-get install -y --no-install-recommends tzdata \
-    && rm -rf /var/lib/apt/lists/* \
-    && cp /usr/share/zoneinfo/America/Chicago /etc/localtime \
-    && echo "America/Chicago" > /etc/timezone
+RUN cp /usr/share/zoneinfo/America/Chicago /etc/localtime && \
+    echo "America/Chicago" > /etc/timezone
 
-# Install build dependencies required for some Python packages
-# (e.g., those with C extensions, like grpcio for opentelemetry-exporter-otlp)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    python3-dev \
-    libev-dev \
-    curl \
-    bash \
-    && rm -rf /var/lib/apt/lists/*
+# Create non-root user for security
+RUN adduser -D -s /bin/sh hidewall
 
-# Set display port to avoid crash (if X server related, usually not needed for web apps)
-ENV DISPLAY=:99
+# Set working directory
+WORKDIR /app
 
-# Upgrade pip and install requirements
-RUN python -m pip install --upgrade pip setuptools wheel
-RUN python -m pip install --no-cache-dir -r requirements.txt
+# Copy the binary from builder stage
+COPY --from=builder /app/hidewall .
 
-# Command to run your Flask app
-CMD ["python", "yeet.py"]
+# Copy static files, templates, and config
+COPY --chown=hidewall:hidewall static/ ./static/
+COPY --chown=hidewall:hidewall templates/ ./templates/
+COPY --chown=hidewall:hidewall service-worker.js ./
+COPY --chown=hidewall:hidewall blocked_sites.txt ./
+
+# Switch to non-root user
+USER hidewall
+
+# Expose port
+EXPOSE 8080
+
+# Set environment variables
+ENV PORT=8080
+ENV HOST=0.0.0.0
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1
+
+# Run the application
+CMD ["./hidewall"]

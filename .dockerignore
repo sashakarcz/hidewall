@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# Docker
+Dockerfile*
+docker-compose*
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+hidewall
+*.exe
+
+# Logs
+*.log
+
+# Python artifacts (from old version)
+__pycache__
+*.pyc
+requirements.txt
+yeet.py
+*.py
+
+# Go test files
+*_test.go
