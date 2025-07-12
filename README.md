@@ -4,7 +4,15 @@
 
 ## About
 
-Hidewall is what powers `hidewall.io`, a web service to bypass most soft paywalls. Hidewall is a Python Flask app that uses Requests, BeautifulSoup, and web caches to access content that is blocked behind a soft paywall.
+Hidewall is what powers `hidewall.io`, a web service to bypass most soft paywalls. 
+
+**Now rewritten in Go!** Hidewall has been completely rewritten from Python to Go for better performance, smaller Docker images, and improved reliability. The new Go version uses advanced paywall bypass techniques including:
+
+- **Archive.today integration** - Searches existing archives across multiple domains
+- **12ft Ladder support** - Popular paywall bypass service
+- **Wayback Machine** - Internet Archive fallback
+- **Smart user agent switching** - Twitterbot for regular sites, advanced methods for problematic sites
+- **Multiple referrer methods** - Google, Facebook, and Twitter referrers for stubborn paywalls
 
 You can run this locally via Docker, or use the public version at [`https://hidewall.io`](https://hidewall.io)
 
