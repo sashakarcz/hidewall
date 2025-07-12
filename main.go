@@ -22,7 +22,7 @@ import (
 
 // Configuration constants
 const (
-	DefaultPort = 8080
+	DefaultPort = 80
 	DefaultHost = "0.0.0.0"
 
 	// Template and static file names

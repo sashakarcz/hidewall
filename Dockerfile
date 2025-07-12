@@ -1,5 +1,5 @@
 # Multi-stage build for Go application
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 LABEL version="5.0"
 LABEL org.opencontainers.image.authors="sasha@starnix.net"
@@ -52,15 +52,15 @@ COPY --chown=hidewall:hidewall blocked_sites.txt ./
 USER hidewall
 
 # Expose port
-EXPOSE 8080
+EXPOSE 80
 
 # Set environment variables
-ENV PORT=8080
+ENV PORT=80
 ENV HOST=0.0.0.0
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1
 
 # Run the application
-CMD ["./hidewall"]
+CMD ["sh", "-c", "echo 'Starting hidewall on' $HOST:$PORT && ./hidewall"]
