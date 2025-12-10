@@ -4,20 +4,26 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"fmt"
+	"html"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
-	"regexp"
+	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/andybalholm/brotli"
 	"github.com/gorilla/mux"
+	"golang.org/x/time/rate"
 )
 
 // Configuration constants
@@ -42,6 +48,13 @@ const (
 
 	// Request timeout
 	RequestTimeout = 10 * time.Second
+
+	// Response size limit (10MB)
+	MaxResponseSize = 10 * 1024 * 1024
+
+	// Rate limiting
+	RateLimitRequests = 10
+	RateLimitWindow   = 1 * time.Minute
 )
 
 // Global variables
@@ -53,13 +66,57 @@ var (
 
 // HidewallApp represents the main application structure
 type HidewallApp struct {
-	router *mux.Router
+	router      *mux.Router
+	rateLimiter *rateLimiter
+}
+
+// rateLimiter implements per-IP rate limiting
+type rateLimiter struct {
+	visitors map[string]*rate.Limiter
+	mu       sync.RWMutex
+}
+
+// newRateLimiter creates a new rate limiter
+func newRateLimiter() *rateLimiter {
+	return &rateLimiter{
+		visitors: make(map[string]*rate.Limiter),
+	}
+}
+
+// getLimiter returns the rate limiter for a given IP
+func (rl *rateLimiter) getLimiter(ip string) *rate.Limiter {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	limiter, exists := rl.visitors[ip]
+	if !exists {
+		limiter = rate.NewLimiter(rate.Every(RateLimitWindow/RateLimitRequests), RateLimitRequests)
+		rl.visitors[ip] = limiter
+	}
+
+	return limiter
+}
+
+// cleanup removes old entries periodically
+func (rl *rateLimiter) cleanup() {
+	ticker := time.NewTicker(5 * time.Minute)
+	go func() {
+		for range ticker.C {
+			rl.mu.Lock()
+			rl.visitors = make(map[string]*rate.Limiter)
+			rl.mu.Unlock()
+		}
+	}()
 }
 
 // NewHidewallApp creates a new instance of the application
 func NewHidewallApp() *HidewallApp {
+	rl := newRateLimiter()
+	rl.cleanup()
+
 	app := &HidewallApp{
-		router: mux.NewRouter(),
+		router:      mux.NewRouter(),
+		rateLimiter: rl,
 	}
 	app.setupRoutes()
 	return app
@@ -67,14 +124,18 @@ func NewHidewallApp() *HidewallApp {
 
 // setupRoutes configures all the HTTP routes
 func (app *HidewallApp) setupRoutes() {
+	// Apply security middleware to all routes
+	app.router.Use(app.securityHeadersMiddleware)
+	app.router.Use(app.rateLimitMiddleware)
+
 	app.router.HandleFunc(AppRouteRoot, app.indexHandler).Methods("GET")
 	app.router.HandleFunc(AppRouteJS, app.serviceWorkerHandler).Methods("GET")
 	app.router.HandleFunc(AppRouteBypass, app.bypassPaywallHandler).Methods("GET")
-	
+
 	// Serve static files from the static directory
 	staticFileServer := http.FileServer(http.Dir("./static/"))
 	app.router.PathPrefix(StaticURLPath).Handler(http.StripPrefix(StaticURLPath, staticFileServer))
-	
+
 	// Also serve manifest.json and favicon.ico from static directory
 	app.router.HandleFunc("/manifest.json", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "static/manifest.json")
@@ -82,6 +143,58 @@ func (app *HidewallApp) setupRoutes() {
 	app.router.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "static/favicon.ico")
 	}).Methods("GET")
+}
+
+// securityHeadersMiddleware adds security headers to all responses
+func (app *HidewallApp) securityHeadersMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
+		w.Header().Set("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+		next.ServeHTTP(w, r)
+	})
+}
+
+// rateLimitMiddleware implements rate limiting per IP
+func (app *HidewallApp) rateLimitMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ip := getClientIP(r)
+		limiter := app.rateLimiter.getLimiter(ip)
+
+		if !limiter.Allow() {
+			http.Error(w, "Rate limit exceeded. Please try again later.", http.StatusTooManyRequests)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// getClientIP extracts the real client IP from the request
+func getClientIP(r *http.Request) string {
+	// Check X-Forwarded-For header first (for proxied requests)
+	xff := r.Header.Get("X-Forwarded-For")
+	if xff != "" {
+		ips := strings.Split(xff, ",")
+		if len(ips) > 0 {
+			return strings.TrimSpace(ips[0])
+		}
+	}
+
+	// Check X-Real-IP header
+	xri := r.Header.Get("X-Real-IP")
+	if xri != "" {
+		return xri
+	}
+
+	// Fallback to RemoteAddr
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return ip
 }
 
 // ServeHTTP implements the http.Handler interface
@@ -188,10 +301,107 @@ func (app *HidewallApp) bypassPaywallHandler(w http.ResponseWriter, r *http.Requ
 }
 
 // isValidURL validates if a given string is a well-formed HTTP or HTTPS URL
+// and protects against SSRF attacks
 func isValidURL(urlStr string) bool {
-	pattern := `^(https?://)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(:\d+)?(/[-a-zA-Z0-9+&@#/%=~_|!:,.;]*)*(\?[a-zA-Z0-9+&@#/%=~_|!:,.;]*)?(\#[a-zA-Z0-9+&@#/%=~_|!:,.;]*)?$`
-	matched, _ := regexp.MatchString(pattern, urlStr)
-	return matched
+	// Parse the URL
+	parsedURL, err := url.Parse(urlStr)
+	if err != nil {
+		return false
+	}
+
+	// Only allow http and https schemes
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		return false
+	}
+
+	// Ensure hostname is present
+	hostname := parsedURL.Hostname()
+	if hostname == "" {
+		return false
+	}
+
+	// Prevent SSRF attacks - block private IP ranges and localhost
+	if isPrivateOrLocalhost(hostname) {
+		log.Printf("Blocked attempt to access private/localhost URL: %s", urlStr)
+		return false
+	}
+
+	// Validate URL structure with simpler regex to prevent ReDoS
+	if len(urlStr) > 2048 {
+		return false
+	}
+
+	// Basic validation that it looks like a URL
+	if !strings.HasPrefix(urlStr, "http://") && !strings.HasPrefix(urlStr, "https://") {
+		return false
+	}
+
+	return true
+}
+
+// isPrivateOrLocalhost checks if a hostname resolves to a private or localhost IP
+func isPrivateOrLocalhost(hostname string) bool {
+	// Check for localhost patterns
+	if hostname == "localhost" || hostname == "0.0.0.0" || strings.HasSuffix(hostname, ".local") {
+		return true
+	}
+
+	// Resolve the hostname to IP addresses
+	ips, err := net.LookupIP(hostname)
+	if err != nil {
+		// If we can't resolve it, be conservative and block it
+		return true
+	}
+
+	// Check each resolved IP
+	for _, ip := range ips {
+		if isPrivateIP(ip) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// isPrivateIP checks if an IP address is private, loopback, or link-local
+func isPrivateIP(ip net.IP) bool {
+	// Check for loopback
+	if ip.IsLoopback() {
+		return true
+	}
+
+	// Check for link-local
+	if ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+		return true
+	}
+
+	// Check for private IPv4 ranges
+	privateIPBlocks := []string{
+		"10.0.0.0/8",
+		"172.16.0.0/12",
+		"192.168.0.0/16",
+		"169.254.0.0/16", // Link-local
+		"127.0.0.0/8",    // Loopback
+		"224.0.0.0/4",    // Multicast
+		"240.0.0.0/4",    // Reserved
+	}
+
+	for _, cidr := range privateIPBlocks {
+		_, block, _ := net.ParseCIDR(cidr)
+		if block != nil && block.Contains(ip) {
+			return true
+		}
+	}
+
+	// Check for private IPv6 ranges
+	if ip.To4() == nil {
+		// IPv6 unique local addresses (fc00::/7)
+		if len(ip) == 16 && (ip[0]&0xfe) == 0xfc {
+			return true
+		}
+	}
+
+	return false
 }
 
 // removeQueryAndFragment removes query parameters and fragments from URL
@@ -384,17 +594,11 @@ func fetchArchiveToday(originalURL string) (string, error) {
 
 	for _, domain := range archiveDomains {
 		log.Printf("Trying %s for: %s", domain, originalURL)
-		
+
 		// Search for existing archives by appending the URL
 		searchURL := domain + originalURL
-		
-		client := &http.Client{
-			Timeout: 10 * time.Second,
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				// Follow redirects - archive.today often redirects to the actual archived page
-				return nil
-			},
-		}
+
+		client := createSecureHTTPClient(10 * time.Second)
 
 		req, err := http.NewRequest("GET", searchURL, nil)
 		if err != nil {
@@ -423,7 +627,8 @@ func fetchArchiveToday(originalURL string) (string, error) {
 			continue
 		}
 
-		body, err := io.ReadAll(resp.Body)
+		// Limit response size
+		body, err := io.ReadAll(io.LimitReader(resp.Body, MaxResponseSize))
 		if err != nil {
 			continue
 		}
@@ -469,11 +674,27 @@ func fetchArchiveToday(originalURL string) (string, error) {
 	return "", fmt.Errorf("no existing archives found on archive.today domains")
 }
 
+// createSecureHTTPClient creates an HTTP client with security settings
+func createSecureHTTPClient(timeout time.Duration) *http.Client {
+	return &http.Client{
+		Timeout: timeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			// Limit redirect chain to 10
+			if len(via) >= 10 {
+				return fmt.Errorf("too many redirects")
+			}
+			// Validate redirect target to prevent open redirects to private networks
+			if isPrivateOrLocalhost(req.URL.Hostname()) {
+				return fmt.Errorf("redirect to private or localhost address blocked")
+			}
+			return nil
+		},
+	}
+}
+
 // fetchURLWithTimeout fetches URL with a specific timeout
 func fetchURLWithTimeout(urlStr, userAgent string, timeout time.Duration) (string, error) {
-	client := &http.Client{
-		Timeout: timeout,
-	}
+	client := createSecureHTTPClient(timeout)
 
 	req, err := http.NewRequest("GET", urlStr, nil)
 	if err != nil {
@@ -496,7 +717,8 @@ func fetchURLWithTimeout(urlStr, userAgent string, timeout time.Duration) (strin
 		return "", fmt.Errorf("HTTP error %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	// Limit response size to prevent memory exhaustion
+	body, err := io.ReadAll(io.LimitReader(resp.Body, MaxResponseSize))
 	if err != nil {
 		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
@@ -552,10 +774,8 @@ func fetchURLWithTimeout(urlStr, userAgent string, timeout time.Duration) (strin
 func fetchWaybackMachine(originalURL string) (string, error) {
 	// Try to get the latest snapshot
 	waybackURL := "https://web.archive.org/web/2/" + originalURL
-	
-	client := &http.Client{
-		Timeout: 20 * time.Second, // Wayback can be slow
-	}
+
+	client := createSecureHTTPClient(20 * time.Second) // Wayback can be slow
 
 	req, err := http.NewRequest("GET", waybackURL, nil)
 	if err != nil {
@@ -575,7 +795,8 @@ func fetchWaybackMachine(originalURL string) (string, error) {
 		return "", fmt.Errorf("wayback HTTP error %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	// Limit response size
+	body, err := io.ReadAll(io.LimitReader(resp.Body, MaxResponseSize))
 	if err != nil {
 		return "", fmt.Errorf("failed to read wayback response: %w", err)
 	}
@@ -598,9 +819,7 @@ func fetchWaybackMachine(originalURL string) (string, error) {
 
 // fetchURLWithReferrer fetches URL with a specific referrer header
 func fetchURLWithReferrer(urlStr, userAgent, referrer string) (string, error) {
-	client := &http.Client{
-		Timeout: RequestTimeout,
-	}
+	client := createSecureHTTPClient(RequestTimeout)
 
 	req, err := http.NewRequest("GET", urlStr, nil)
 	if err != nil {
@@ -630,7 +849,8 @@ func fetchURLWithReferrer(urlStr, userAgent, referrer string) (string, error) {
 		return "", fmt.Errorf("HTTP error %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	// Limit response size
+	body, err := io.ReadAll(io.LimitReader(resp.Body, MaxResponseSize))
 	if err != nil {
 		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
@@ -663,9 +883,7 @@ func fetchURLWithReferrer(urlStr, userAgent, referrer string) (string, error) {
 
 // fetchURL is the core HTTP fetching function
 func fetchURL(urlStr, userAgent string) (string, error) {
-	client := &http.Client{
-		Timeout: RequestTimeout,
-	}
+	client := createSecureHTTPClient(RequestTimeout)
 
 	req, err := http.NewRequest("GET", urlStr, nil)
 	if err != nil {
@@ -696,7 +914,8 @@ func fetchURL(urlStr, userAgent string) (string, error) {
 		return "", fmt.Errorf("HTTP error %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	// Limit response size
+	body, err := io.ReadAll(io.LimitReader(resp.Body, MaxResponseSize))
 	if err != nil {
 		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
@@ -706,7 +925,7 @@ func fetchURL(urlStr, userAgent string) (string, error) {
 	decompressedBody, err := decompressContent(body, contentEncoding)
 	if err != nil {
 		log.Printf("Decompression error: %v", err)
-		decompressedBody = body // Use original body if decompression fails
+		decompressedBody = body
 	}
 
 	// Parse HTML with goquery
@@ -761,7 +980,7 @@ func handleFetchError(w http.ResponseWriter, err error, urlStr string) {
 				<li>Looking for the article on <a href="https://web.archive.org" target="_blank" style="color: #00ade6;">Wayback Machine</a></li>
 				<li>Using your browser's reading mode if available</li>
 			</ul>
-		`, urlStr)
+		`, html.EscapeString(urlStr))
 	} else if strings.Contains(errStr, "HTTP error") {
 		statusCode = http.StatusBadGateway
 		errorTitle = "Site Access Error"
@@ -771,7 +990,7 @@ func handleFetchError(w http.ResponseWriter, err error, urlStr string) {
 				<strong style="color: #00ade6;">URL:</strong> <span style="font-family: monospace; word-break: break-all;">%s</span>
 			</div>
 			<p>The site returned an error when we tried to fetch it. Please check that the URL is correct and the site is accessible.</p>
-		`, urlStr)
+		`, html.EscapeString(urlStr))
 	} else if strings.Contains(errStr, "timeout") {
 		statusCode = http.StatusGatewayTimeout
 		errorTitle = "Request Timeout"
@@ -781,7 +1000,7 @@ func handleFetchError(w http.ResponseWriter, err error, urlStr string) {
 				<strong style="color: #00ade6;">URL:</strong> <span style="font-family: monospace; word-break: break-all;">%s</span>
 			</div>
 			<p>This might be a temporary issue. Please try again in a few moments.</p>
-		`, urlStr)
+		`, html.EscapeString(urlStr))
 	} else {
 		statusCode = http.StatusInternalServerError
 		errorTitle = "Unexpected Error"
@@ -791,7 +1010,7 @@ func handleFetchError(w http.ResponseWriter, err error, urlStr string) {
 				<strong style="color: #00ade6;">URL:</strong> <span style="font-family: monospace; word-break: break-all;">%s</span>
 			</div>
 			<p>Please try again, or contact support if the problem persists.</p>
-		`, urlStr)
+		`, html.EscapeString(urlStr))
 	}
 
 	html := fmt.Sprintf(`<!DOCTYPE html>
@@ -905,10 +1124,30 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	log.Printf("Starting Hidewall server on %s:%d", host, port)
-	
-	// Start server
-	if err := server.ListenAndServe(); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	// Channel to listen for interrupt signals
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	// Start server in a goroutine
+	go func() {
+		log.Printf("Starting Hidewall server on %s:%d", host, port)
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Failed to start server: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal
+	<-stop
+	log.Println("Shutting down server gracefully...")
+
+	// Create a deadline for shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Attempt graceful shutdown
+	if err := server.Shutdown(ctx); err != nil {
+		log.Printf("Server shutdown error: %v", err)
 	}
+
+	log.Println("Server stopped")
 }
